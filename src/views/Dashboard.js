@@ -20,50 +20,43 @@ export default {
     view.id = 'view-dashboard';
 
     view.innerHTML = `
-      <!-- Metrics Row -->
-      <div class="metrics-grid">
-        <div class="metric-card status-green animate-in stagger-1">
-          <div class="metric-label">Uptime</div>
-          <div class="metric-value text-green" id="metric-uptime">0.0%</div>
-          <div class="metric-trend text-green"><i class="ti ti-arrow-up"></i> healthy</div>
-        </div>
-        <div class="metric-card status-red animate-in stagger-2" id="card-error-rate">
-          <div class="metric-label">Error Rate</div>
-          <div class="metric-value text-red" id="metric-error">0.0%</div>
-          <div class="metric-trend text-red"><i class="ti ti-arrow-up"></i> 3.1%</div>
-        </div>
-        <div class="metric-card status-amber animate-in stagger-3">
-          <div class="metric-label">P95 Latency</div>
-          <div class="metric-value text-amber" id="metric-latency">0ms</div>
-          <div class="metric-trend text-amber">above SLA</div>
-        </div>
-        <div class="metric-card status-red animate-in stagger-4" id="card-incidents">
-          <div class="metric-label">Open Incidents</div>
-          <div class="metric-value" id="metric-incidents">0</div>
-          <div class="metric-trend text-secondary">2 unresolved</div>
-        </div>
-      </div>
-
-      <!-- Charts Row -->
-      <div class="charts-row">
-        <div class="chart-container">
-          <div class="chart-title"><i class="ti ti-clock"></i> Latency (ms) — last 30 min</div>
-          <div class="chart-canvas-wrapper">
-            <canvas id="chart-latency"></canvas>
+      <div class="dashboard-masonry">
+        <!-- Main Column -->
+        <div class="main-column">
+          <div class="metrics-cluster">
+            <div class="metric-card status-green animate-in stagger-1">
+              <div class="metric-label">System Health</div>
+              <div class="metric-value text-green" id="metric-uptime">0.0%</div>
+              <div class="metric-trend text-green"><i class="ti ti-activity-heartbeat"></i> All systems operational</div>
+            </div>
+            <div class="metric-card status-red animate-in stagger-2" id="card-error-rate">
+              <div class="metric-label">Error Rate</div>
+              <div class="metric-value text-red" id="metric-error">0.0%</div>
+              <div class="metric-trend text-red"><i class="ti ti-arrow-up-right"></i> 3.1% from baseline</div>
+            </div>
+            <div class="metric-card status-amber animate-in stagger-3">
+              <div class="metric-label">P95 Latency</div>
+              <div class="metric-value text-amber" id="metric-latency">0ms</div>
+              <div class="metric-trend text-amber">Performance degrading</div>
+            </div>
           </div>
-        </div>
-        <div class="chart-container">
-          <div class="chart-title"><i class="ti ti-alert-octagon"></i> Error rate (%) — last 30 min</div>
-          <div class="chart-canvas-wrapper">
-            <canvas id="chart-error"></canvas>
-          </div>
-        </div>
-      </div>
 
-      <!-- Table + Feed Row -->
-      <div class="table-feed-row">
-        <div>
-          <div class="section-header">
+          <div class="charts-row">
+            <div class="chart-container">
+              <div class="chart-title"><i class="ti ti-clock"></i> Latency (ms) — last 30 min</div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-latency"></canvas>
+              </div>
+            </div>
+            <div class="chart-container">
+              <div class="chart-title"><i class="ti ti-alert-octagon"></i> Error rate (%) — last 30 min</div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-error"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-header mt-4">
             <i class="ti ti-server"></i> Endpoint Health
           </div>
           <div class="table-container">
@@ -82,24 +75,29 @@ export default {
             </table>
           </div>
         </div>
-        <div>
-          <div class="section-header">
-            <i class="ti ti-activity"></i> Recent Activity
+
+        <!-- Side Column -->
+        <div class="side-column">
+          <div class="metric-card status-red animate-in stagger-4" id="card-incidents">
+            <div class="metric-label">Active Critical Incidents</div>
+            <div class="metric-value" id="metric-incidents">0</div>
+            <div class="metric-trend text-secondary">Requires immediate attention</div>
+          </div>
+
+          <div class="section-header mt-4">
+            <i class="ti ti-activity"></i> Live Activity Feed
           </div>
           <div class="incidents-feed" id="dashboard-feed"></div>
-        </div>
-      </div>
 
-      <!-- Anomaly Detection -->
-      <div>
-        <div class="section-header">
-          <i class="ti ti-radar-2"></i> Anomaly Detection
-          <span class="badge bg-purple" style="margin-left:8px;"><i class="ti ti-brain" style="margin-right:2px;font-size:10px;"></i> AI-Powered</span>
-        </div>
-        <div class="anomaly-section" id="anomaly-section">
-          <div class="empty-state" id="anomaly-empty" style="padding:24px;">
-            <i class="ti ti-radar-2"></i>
-            <p>Monitoring for anomalies... AI engine is analyzing patterns in real-time.</p>
+          <div class="section-header mt-4">
+            <i class="ti ti-radar-2"></i> AI Anomalies
+            <span class="badge bg-purple" style="margin-left:8px;"><i class="ti ti-sparkles" style="margin-right:2px;font-size:10px;"></i> Neural Engine</span>
+          </div>
+          <div class="anomaly-section" id="anomaly-section">
+            <div class="empty-state" id="anomaly-empty" style="padding:24px;">
+              <i class="ti ti-radar-2"></i>
+              <p>Analyzing network topology in real-time...</p>
+            </div>
           </div>
         </div>
       </div>

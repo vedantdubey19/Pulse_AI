@@ -1,68 +1,85 @@
 :root {
-  /* Background layers - Deep Space Blue */
-  --bg-1: #030509;
-  --bg-2: #080c16;
-  --bg-3: #0c1222;
-  --bg-4: #12192e;
-  --bg-5: #1a223b;
+  /* Background layers - Premium Light Theme */
+  --bg-app: #f8fafc;
+  --bg-1: #ffffff;
+  --bg-2: #f1f5f9;
+  --bg-3: #e2e8f0;
+  --bg-4: #cbd5e1;
+  --bg-5: #94a3b8;
 
-  /* Accent colors - Neon Cyberpunk */
-  --accent-blue: #00e5ff;
-  --accent-blue-dim: rgba(0, 229, 255, 0.15);
-  --alert-red: #ff2a5f;
-  --alert-red-dim: rgba(255, 42, 95, 0.15);
-  --warning-amber: #ffaa00;
-  --warning-amber-dim: rgba(255, 170, 0, 0.15);
-  --success-green: #00ff88;
-  --success-green-dim: rgba(0, 255, 136, 0.15);
-  --ai-purple: #b026ff;
-  --ai-purple-dim: rgba(176, 38, 255, 0.15);
-  --info-cyan: #06b6d4;
+  /* Accent colors - Jewel Tones (adjusted for light theme) */
+  --accent-sapphire: #2563eb;
+  --accent-sapphire-dim: rgba(37, 99, 235, 0.1);
+  --accent-amethyst: #9333ea;
+  --accent-amethyst-dim: rgba(147, 51, 234, 0.1);
+  --accent-emerald: #059669;
+  --accent-emerald-dim: rgba(5, 150, 105, 0.1);
+  --accent-ruby: #e11d48;
+  --accent-ruby-dim: rgba(225, 29, 72, 0.1);
+  
+  /* Semantic Mappings */
+  --accent-blue: var(--accent-sapphire);
+  --accent-blue-dim: var(--accent-sapphire-dim);
+  --alert-red: var(--accent-ruby);
+  --alert-red-dim: var(--accent-ruby-dim);
+  --warning-amber: #d97706;
+  --warning-amber-dim: rgba(217, 119, 6, 0.1);
+  --success-green: var(--accent-emerald);
+  --success-green-dim: var(--accent-emerald-dim);
+  --ai-purple: var(--accent-amethyst);
+  --ai-purple-dim: var(--accent-amethyst-dim);
+  --info-cyan: #0891b2;
 
   /* Text */
-  --text-primary: #ffffff;
-  --text-secondary: #8b9bb4;
-  --text-tertiary: #526380;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
 
   /* Borders */
-  --border-light: rgba(255, 255, 255, 0.05);
-  --border-medium: rgba(255, 255, 255, 0.1);
-  --border-strong: rgba(255, 255, 255, 0.2);
+  --border-light: rgba(0, 0, 0, 0.05);
+  --border-medium: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.15);
+  
+  /* Gradient Borders */
+  --border-gradient-amethyst: linear-gradient(135deg, rgba(147, 51, 234, 0.4), rgba(37, 99, 235, 0.1));
 
   /* Glassmorphism */
-  --glass-bg: rgba(8, 12, 22, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.12);
-  --backdrop-blur: blur(12px);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-hover: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --backdrop-blur: blur(24px);
 
   /* Typography */
+  --font-heading: 'Outfit', -apple-system, sans-serif;
   --font-ui: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Sizing */
-  --sidebar-width: 240px;
-  --sidebar-collapsed: 72px;
-  --topbar-height: 60px;
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 80px;
+  --topbar-height: 80px;
+  --app-padding: 24px;
 
   /* Shadows & Glows */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.8);
-  --shadow-glow-red: 0 0 24px rgba(255, 42, 95, 0.4);
-  --shadow-glow-purple: 0 0 24px rgba(176, 38, 255, 0.4);
-  --shadow-glow-green: 0 0 24px rgba(0, 255, 136, 0.4);
-  --shadow-glow-blue: 0 0 24px rgba(0, 229, 255, 0.4);
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.12);
+  --shadow-glow-red: 0 0 32px rgba(225, 29, 72, 0.15);
+  --shadow-glow-purple: 0 0 32px rgba(147, 51, 234, 0.15);
+  --shadow-glow-green: 0 0 32px rgba(5, 150, 105, 0.15);
+  --shadow-glow-blue: 0 0 32px rgba(37, 99, 235, 0.15);
 
   /* Transitions */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --duration-fast: 200ms;
+  --duration-fast: 250ms;
   --duration-normal: 400ms;
-  --duration-slow: 600ms;
+  --duration-slow: 700ms;
 
   /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
   --radius-full: 9999px;
 }

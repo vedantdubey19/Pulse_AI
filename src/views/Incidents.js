@@ -76,6 +76,18 @@ function renderIncidents() {
       actionBtn = `<span class="badge" style="border:1px solid var(--ai-purple);color:var(--ai-purple)"><i class="ti ti-brain" style="margin-right:4px"></i>RCA Ready</span>`;
     }
 
+    const causeParts = inc.cause.split('—').map(s => s.trim());
+    const mainCause = causeParts[0];
+    const detailCause = causeParts[1] || '';
+
+    const bulletNotes = detailCause ? `
+      <ul class="cause-details mt-2">
+        <li>${detailCause}</li>
+        <li>Automated health checks failing for ${inc.endpoint}</li>
+        ${inc.severity === 'high' ? '<li>Immediate intervention recommended</li>' : ''}
+      </ul>
+    ` : '';
+
     return `
       <div class="incident-card ${inc.severity}">
         <div class="ic-top">
@@ -85,10 +97,13 @@ function renderIncidents() {
           </div>
           <div class="font-mono text-secondary" style="font-size:12px;">${inc.time} ago</div>
         </div>
-        <div class="ic-body cause-text">${inc.cause}</div>
-        <div class="ic-bottom">
+        <div class="ic-body cause-text">
+          <div class="cause-main">${mainCause}</div>
+          ${bulletNotes}
+        </div>
+        <div class="ic-bottom mt-2">
           <div class="ic-stats">
-            <div><i class="ti ti-users"></i> ${inc.affected} requests</div>
+            <div><i class="ti ti-users"></i> ${inc.affected} requests affected</div>
             <div><i class="ti ti-clock"></i> Duration: ${inc.duration}</div>
           </div>
           <div>${actionBtn}</div>
