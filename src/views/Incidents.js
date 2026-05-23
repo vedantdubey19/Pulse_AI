@@ -99,6 +99,43 @@ function renderIncidents() {
 
   // RCA button handlers
   list.querySelectorAll('[data-action="rca"]').forEach(btn => {
-    btn.addEventListener('click', () => navigate('rca'));
+    btn.addEventListener('click', async (e) => {
+      if (btn.dataset.loading === 'true') return;
+      btn.dataset.loading = 'true';
+      const card = e.target.closest('.incident-card');
+      
+      // Phase 1
+      btn.innerHTML = '<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> <span class="font-mono">INITIALIZING...</span>';
+      
+      // Phase 2
+      const statuses = ["Fetching logs...", "Analyzing patterns...", "Identifying root cause..."];
+      for (const status of statuses) {
+        await new Promise(r => setTimeout(r, 400));
+        btn.innerHTML = `<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> <span class="font-mono">${status}</span>`;
+      }
+      
+      // Phase 3
+      btn.innerHTML = '<i class="ti ti-check"></i> <span class="font-mono">RCA COMPLETE</span>';
+      btn.style.backgroundColor = 'var(--success-green)';
+      btn.style.borderColor = 'var(--success-green)';
+      btn.style.color = '#fff';
+      
+      // Expand card to show View RCA action
+      const body = card.querySelector('.ic-body');
+      const rcaPanel = document.createElement('div');
+      rcaPanel.className = 'font-mono text-purple';
+      rcaPanel.style.marginTop = '12px';
+      rcaPanel.style.padding = '12px';
+      rcaPanel.style.backgroundColor = 'var(--ai-purple-dim)';
+      rcaPanel.style.border = '1px solid var(--ai-purple)';
+      rcaPanel.style.borderRadius = 'var(--radius-md)';
+      rcaPanel.style.animation = 'slideInRight var(--duration-normal) var(--ease-out) forwards';
+      rcaPanel.innerHTML = `
+        <div style="margin-bottom: 8px; color: var(--text-primary);">Root Cause Identified:</div>
+        <div style="margin-bottom: 12px; font-size: 11px;">Anomalous spike in database connections leading to pool exhaustion.</div>
+        <button class="btn-primary" style="font-size: 12px; width: 100%; justify-content: center;" onclick="window.location.hash='rca'">View Full RCA</button>
+      `;
+      body.appendChild(rcaPanel);
+    });
   });
 }

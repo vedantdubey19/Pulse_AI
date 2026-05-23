@@ -48,21 +48,34 @@
   border-color: var(--accent-blue);
   color: #fff;
 }
-.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:hover { 
+  opacity: 1; 
+  transform: translateY(-2px) scale(1.02); 
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
 
 .btn-secondary {
   background: transparent;
   border-color: var(--border-medium);
   color: var(--text-primary);
 }
-.btn-secondary:hover { background-color: rgba(255, 255, 255, 0.05); }
+.btn-secondary:hover { 
+  background-color: rgba(255, 255, 255, 0.1); 
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
+}
 
 .btn-danger {
   background-color: var(--alert-red-dim);
   border-color: var(--alert-red);
   color: var(--alert-red);
 }
-.btn-danger:hover { background-color: var(--alert-red); color: #fff; }
+.btn-danger:hover { 
+  background-color: var(--alert-red); 
+  color: #fff; 
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
 
 .btn-test {
   background-color: var(--bg-4);
@@ -100,7 +113,11 @@
   align-items: center;
   gap: 6px;
 }
-.btn-rca:hover { background-color: var(--ai-purple); }
+.btn-rca:hover { 
+  background-color: var(--ai-purple); 
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+}
 
 /* Metric Card */
 .metric-card {

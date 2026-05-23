@@ -39,8 +39,11 @@ export function renderSidebar(container) {
     <div class="api-status">
       <span class="nav-label">API Key</span>
       <div class="api-key-box">
-        <span>pk_prod_8f...2a9</span>
-        <i class="ti ti-copy"></i>
+        <span id="api-key-display" data-fullkey="pk_prod_8f3a7c2b1d9e4f6a8b0c1d2e3f4a5b6c7d8e9f2a9">pk_prod_8f...2a9</span>
+        <div style="display:flex;gap:8px;">
+          <i class="ti ti-edit" id="api-key-edit" title="Edit"></i>
+          <i class="ti ti-copy" id="api-key-copy" title="Copy"></i>
+        </div>
       </div>
     </div>
   `;
@@ -70,11 +73,26 @@ export function renderSidebar(container) {
     }
   });
 
+  const display = sidebar.querySelector('#api-key-display');
+  
+  // Edit API key
+  const editBtn = sidebar.querySelector('#api-key-edit');
+  if (editBtn && display) {
+    editBtn.addEventListener('click', () => {
+      const newKey = prompt('Enter new API key:', display.dataset.fullkey);
+      if (newKey && newKey.trim() !== '') {
+        const visibleKey = newKey.length > 15 ? newKey.substring(0, 10) + '...' + newKey.slice(-3) : newKey;
+        display.innerText = visibleKey;
+        display.dataset.fullkey = newKey.trim();
+      }
+    });
+  }
+
   // Copy API key
-  const copyBtn = sidebar.querySelector('.api-key-box .ti-copy');
-  if (copyBtn) {
+  const copyBtn = sidebar.querySelector('#api-key-copy');
+  if (copyBtn && display) {
     copyBtn.addEventListener('click', () => {
-      navigator.clipboard?.writeText('pk_prod_8f3a7c2b1d9e4f6a8b0c1d2e3f4a5b6c7d8e9f2a9');
+      navigator.clipboard?.writeText(display.dataset.fullkey);
       copyBtn.className = 'ti ti-check';
       setTimeout(() => { copyBtn.className = 'ti ti-copy'; }, 1500);
     });

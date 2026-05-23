@@ -44,6 +44,14 @@ export function renderTopbar(container) {
   // Test failure button
   document.getElementById('btn-test-failure').addEventListener('click', runTestFailure);
 
+  // Notification bell
+  const bell = document.getElementById('notification-bell');
+  if (bell) {
+    bell.addEventListener('click', () => {
+      window.location.hash = 'incidents';
+    });
+  }
+
   // Hamburger toggle (mobile)
   document.getElementById('hamburger-btn').addEventListener('click', () => {
     const sidebar = document.getElementById('sidebar');
