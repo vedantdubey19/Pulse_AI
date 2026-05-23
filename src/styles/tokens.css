@@ -1,0 +1,68 @@
+:root {
+  /* Background layers - Deep Space Blue */
+  --bg-1: #030509;
+  --bg-2: #080c16;
+  --bg-3: #0c1222;
+  --bg-4: #12192e;
+  --bg-5: #1a223b;
+
+  /* Accent colors - Neon Cyberpunk */
+  --accent-blue: #00e5ff;
+  --accent-blue-dim: rgba(0, 229, 255, 0.15);
+  --alert-red: #ff2a5f;
+  --alert-red-dim: rgba(255, 42, 95, 0.15);
+  --warning-amber: #ffaa00;
+  --warning-amber-dim: rgba(255, 170, 0, 0.15);
+  --success-green: #00ff88;
+  --success-green-dim: rgba(0, 255, 136, 0.15);
+  --ai-purple: #b026ff;
+  --ai-purple-dim: rgba(176, 38, 255, 0.15);
+  --info-cyan: #06b6d4;
+
+  /* Text */
+  --text-primary: #ffffff;
+  --text-secondary: #8b9bb4;
+  --text-tertiary: #526380;
+
+  /* Borders */
+  --border-light: rgba(255, 255, 255, 0.05);
+  --border-medium: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.2);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(8, 12, 22, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --backdrop-blur: blur(12px);
+
+  /* Typography */
+  --font-ui: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Sizing */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 72px;
+  --topbar-height: 60px;
+
+  /* Shadows & Glows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.8);
+  --shadow-glow-red: 0 0 24px rgba(255, 42, 95, 0.4);
+  --shadow-glow-purple: 0 0 24px rgba(176, 38, 255, 0.4);
+  --shadow-glow-green: 0 0 24px rgba(0, 255, 136, 0.4);
+  --shadow-glow-blue: 0 0 24px rgba(0, 229, 255, 0.4);
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 200ms;
+  --duration-normal: 400ms;
+  --duration-slow: 600ms;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+}

@@ -1,0 +1,176 @@
+/* Filter bar */
+.filter-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast);
+}
+
+.filter-btn:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+}
+
+.filter-btn.active {
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  background-color: var(--accent-blue-dim);
+}
+
+/* Incident feed (dashboard) */
+.incidents-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.incident-row {
+  background-color: var(--bg-3);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all var(--duration-fast);
+  cursor: pointer;
+}
+
+.incident-row.new {
+  animation: slideDown var(--duration-slow) var(--ease-out) forwards;
+}
+
+.incident-row:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+  transform: translateX(2px);
+  border-left-color: var(--border-strong);
+}
+
+.incident-endpoint {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  width: 220px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.incident-cause {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.incident-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  width: 60px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Incident cards (incidents page) */
+.incident-card {
+  background-color: var(--bg-3);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-left-width: 3px;
+  transition: all var(--duration-fast);
+}
+
+.incident-card:hover {
+  transform: translateX(3px);
+  background-color: var(--bg-4);
+}
+
+.incident-card.high { border-left-color: var(--alert-red); }
+.incident-card.medium { border-left-color: var(--warning-amber); }
+.incident-card.low { border-left-color: var(--accent-blue); }
+.incident-card.resolved {
+  border-left-color: var(--success-green);
+  opacity: 0.7;
+}
+.incident-card.resolved:hover { opacity: 0.85; }
+.incident-card.resolved .cause-text { text-decoration: line-through; }
+
+.ic-top { display: flex; align-items: center; justify-content: space-between; }
+.ic-body { font-size: 14px; line-height: 1.5; color: var(--text-primary); }
+.ic-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  border-top: 1px solid var(--border-light);
+  padding-top: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ic-stats { display: flex; gap: 16px; }
+
+/* Anomaly section */
+.anomaly-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.anomaly-card {
+  background-color: var(--bg-3);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-left: 3px solid var(--warning-amber);
+  animation: slideInLeft var(--duration-slow) var(--ease-out);
+  transition: all var(--duration-fast);
+}
+
+.anomaly-card.critical { border-left-color: var(--alert-red); }
+.anomaly-card:hover { background-color: var(--bg-4); transform: translateX(2px); }
+
+.anomaly-score {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+  border: 2px solid;
+}
+
+.anomaly-score.high { border-color: var(--alert-red); color: var(--alert-red); background: var(--alert-red-dim); }
+.anomaly-score.medium { border-color: var(--warning-amber); color: var(--warning-amber); background: var(--warning-amber-dim); }
+
+.anomaly-details { flex: 1; min-width: 0; }
+.anomaly-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.anomaly-desc { font-size: 12px; color: var(--text-secondary); }
+.anomaly-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+.anomaly-sparkline { width: 80px; height: 30px; flex-shrink: 0; }

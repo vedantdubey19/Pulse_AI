@@ -1,0 +1,73 @@
+/* Tablet breakpoint */
+@media (max-width: 1024px) {
+  #sidebar {
+    width: var(--sidebar-collapsed);
+  }
+  .nav-label, .api-status, .logo-container span { display: none; }
+  .logo-container { justify-content: center; padding: 0; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .nav-item.active { padding-left: 7px; }
+  .nav-icon { margin-right: 0; }
+  .nav-badge { right: 6px; }
+
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-row { grid-template-columns: 1fr; height: auto; }
+  .charts-row .chart-container { height: 200px; }
+  .table-feed-row { grid-template-columns: 1fr; }
+  .rca-layout { grid-template-columns: 1fr; }
+  .settings-grid { grid-template-columns: 1fr; }
+}
+
+/* Mobile breakpoint */
+@media (max-width: 768px) {
+  body { overflow-y: auto; }
+
+  #sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--sidebar-width);
+    transform: translateX(-100%);
+    transition: transform var(--duration-normal) var(--ease-out);
+    z-index: 50;
+  }
+  #sidebar.open { transform: translateX(0); }
+  #sidebar.open ~ .sidebar-backdrop { display: block; }
+
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 45;
+  }
+
+  .nav-label, .api-status, .logo-container span { display: unset; }
+  .logo-container { justify-content: flex-start; padding: 0 20px; }
+  .nav-item { justify-content: flex-start; padding: 10px 12px; }
+  .nav-icon { margin-right: 12px; }
+  .nav-badge { right: 12px; }
+
+  .hamburger { display: flex; }
+
+  .metrics-grid { grid-template-columns: 1fr; }
+  .charts-row { grid-template-columns: 1fr; height: auto; }
+  .charts-row .chart-container { height: 180px; }
+  .table-feed-row { grid-template-columns: 1fr; }
+  .rca-layout { grid-template-columns: 1fr; }
+  .settings-grid { grid-template-columns: 1fr; }
+
+  .table-container { overflow-x: auto; }
+  table { min-width: 600px; }
+
+  /* Chat panel full-screen on mobile */
+  .chat-panel { width: 100vw; }
+
+  /* Topbar adjustments */
+  .hero-pulse { display: none; }
+  .btn-test span { display: none; }
+
+  .incident-endpoint { width: auto; max-width: 160px; }
+  .filter-bar { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 4px; }
+}
