@@ -36,10 +36,7 @@ export default {
               <i class="ti ti-target"></i> Root cause identified
             </div>
             <div class="rca-box-body" id="rca-root-cause-body">
-              ${RCA_DATA.rootCause}
-              <ul class="evidence-list">
-                ${RCA_DATA.evidence.map(e => `<li>${e}</li>`).join('')}
-              </ul>
+              Analyzing telemetry...
             </div>
           </div>
 
@@ -47,10 +44,10 @@ export default {
             <div class="rca-box-title text-green">
               <i class="ti ti-check"></i> Fix recommendation
             </div>
-            <div class="rca-box-body" id="rca-recommendation-body">${RCA_DATA.recommendation}</div>
+            <div class="rca-box-body" id="rca-recommendation-body">Generating recommendations...</div>
           </div>
 
-          <div class="log-block" id="rca-logs-block">${RCA_DATA.logs}</div>
+          <div class="log-block" id="rca-logs-block">Fetching associated logs...</div>
 
           <div class="action-bar">
             <button class="btn btn-primary" id="rca-copy"><i class="ti ti-copy"></i> Copy report</button>
@@ -110,7 +107,7 @@ function renderTimeline() {
 }
 
 async function loadLiveRca() {
-  const activeIncident = (getState('incidents') || []).find((incident) => incident.severity !== 'resolved');
+  const activeIncident = (getState('incidents') || []).find((incident) => !incident.resolved);
   if (!activeIncident?.id) return;
 
   try {
@@ -124,27 +121,33 @@ async function loadLiveRca() {
 
     if (rootCauseBody) {
       rootCauseBody.innerHTML = `
-        ${rca.summary || RCA_DATA.rootCause}
+        ${rca.cause || 'No summary available.'}
         <ul class="evidence-list">
-          ${(rca.evidence || RCA_DATA.evidence).map((item) => `<li>${item}</li>`).join('')}
+          ${(rca.evidence || []).map((item) => `<li>${item}</li>`).join('')}
         </ul>
       `;
     }
 
     if (recommendationBody) {
-      recommendationBody.innerHTML = rca.suggestedFix || RCA_DATA.recommendation;
+      const recs = rca.fixes || rca.recommendations || [];
+      if (Array.isArray(recs)) {
+        recommendationBody.innerHTML = `<ul>${recs.map(r => `<li>${r}</li>`).join('')}</ul>`;
+      } else {
+        recommendationBody.innerHTML = recs || 'No recommendations available.';
+      }
     }
 
     if (logsBlock) {
-      logsBlock.textContent = `Confidence: ${Number(rca.confidence ?? 0).toFixed(2)}\nGenerated at: ${result.generatedAt || 'now'}`;
+      logsBlock.textContent = `Confidence: ${Number(rca.confidence ?? 0).toFixed(2)}\nGenerated at: ${result.generatedAt || new Date().toISOString()}`;
     }
   } catch (err) {
-    showToast('Using local RCA fallback', 'medium');
+    console.error(err);
+    showToast('Failed to load AI RCA analysis', 'high');
   }
 }
 
 async function markResolved() {
-  const activeIncident = (getState('incidents') || []).find((incident) => incident.severity !== 'resolved');
+  const activeIncident = (getState('incidents') || []).find((incident) => !incident.resolved);
   if (!activeIncident?.id) {
     showToast('No active incident to resolve', 'medium');
     return;

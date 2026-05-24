@@ -2,7 +2,7 @@
  * Pulse backend client utilities.
  */
 
-const DEFAULT_PULSE_BACKEND_URL = 'https://pulse-backend-production-817f.up.railway.app';
+const DEFAULT_PULSE_BACKEND_URL = 'http://localhost:8080';
 
 export function getPulseBackendUrl() {
   return localStorage.getItem('pulseBackendUrl') || DEFAULT_PULSE_BACKEND_URL;
