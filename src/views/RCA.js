@@ -3,6 +3,8 @@
  */
 import { TIMELINE_EVENTS, RCA_DATA } from '../services/mockData.js';
 import { showToast } from '../components/Toast.js';
+import { fetchRca, resolveIncident } from '../services/pulseBackend.js';
+import { getState } from '../state.js';
 
 export default {
   mount(container) {
@@ -29,11 +31,11 @@ export default {
             <div style="font-size:12px;color:var(--text-secondary);">Powered by Pulse AI</div>
           </div>
 
-          <div class="rca-box root-cause">
+          <div class="rca-box root-cause" id="rca-root-cause-box">
             <div class="rca-box-title text-purple">
               <i class="ti ti-target"></i> Root cause identified
             </div>
-            <div class="rca-box-body">
+            <div class="rca-box-body" id="rca-root-cause-body">
               ${RCA_DATA.rootCause}
               <ul class="evidence-list">
                 ${RCA_DATA.evidence.map(e => `<li>${e}</li>`).join('')}
@@ -41,14 +43,14 @@ export default {
             </div>
           </div>
 
-          <div class="rca-box recommendation">
+          <div class="rca-box recommendation" id="rca-recommendation-box">
             <div class="rca-box-title text-green">
               <i class="ti ti-check"></i> Fix recommendation
             </div>
-            <div class="rca-box-body">${RCA_DATA.recommendation}</div>
+            <div class="rca-box-body" id="rca-recommendation-body">${RCA_DATA.recommendation}</div>
           </div>
 
-          <div class="log-block">${RCA_DATA.logs}</div>
+          <div class="log-block" id="rca-logs-block">${RCA_DATA.logs}</div>
 
           <div class="action-bar">
             <button class="btn btn-primary" id="rca-copy"><i class="ti ti-copy"></i> Copy report</button>
@@ -75,6 +77,7 @@ export default {
 
     // Render timeline
     renderTimeline();
+    loadLiveRca();
 
     // Action buttons
     document.getElementById('rca-copy')?.addEventListener('click', () => {
@@ -84,7 +87,7 @@ export default {
     });
 
     document.getElementById('rca-resolve')?.addEventListener('click', () => {
-      showToast('Incident marked as resolved', 'success');
+      markResolved();
     });
 
     return () => {};
@@ -104,4 +107,53 @@ function renderTimeline() {
       </div>
     </div>
   `).join('');
+}
+
+async function loadLiveRca() {
+  const activeIncident = (getState('incidents') || []).find((incident) => incident.severity !== 'resolved');
+  if (!activeIncident?.id) return;
+
+  try {
+    const result = await fetchRca(activeIncident.id);
+    const rca = result?.rca;
+    if (!rca) return;
+
+    const rootCauseBody = document.getElementById('rca-root-cause-body');
+    const recommendationBody = document.getElementById('rca-recommendation-body');
+    const logsBlock = document.getElementById('rca-logs-block');
+
+    if (rootCauseBody) {
+      rootCauseBody.innerHTML = `
+        ${rca.summary || RCA_DATA.rootCause}
+        <ul class="evidence-list">
+          ${(rca.evidence || RCA_DATA.evidence).map((item) => `<li>${item}</li>`).join('')}
+        </ul>
+      `;
+    }
+
+    if (recommendationBody) {
+      recommendationBody.innerHTML = rca.suggestedFix || RCA_DATA.recommendation;
+    }
+
+    if (logsBlock) {
+      logsBlock.textContent = `Confidence: ${Number(rca.confidence ?? 0).toFixed(2)}\nGenerated at: ${result.generatedAt || 'now'}`;
+    }
+  } catch (err) {
+    showToast('Using local RCA fallback', 'medium');
+  }
+}
+
+async function markResolved() {
+  const activeIncident = (getState('incidents') || []).find((incident) => incident.severity !== 'resolved');
+  if (!activeIncident?.id) {
+    showToast('No active incident to resolve', 'medium');
+    return;
+  }
+
+  try {
+    await resolveIncident(activeIncident.id);
+    showToast('Incident marked as resolved', 'success');
+  } catch (err) {
+    showToast('Unable to resolve incident', 'high');
+  }
 }

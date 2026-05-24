@@ -7,6 +7,7 @@ const state = {
   incidentsCount: 3,
   testRunning: false,
   incidents: [],
+  metrics: {},
   anomalies: [],
   chatOpen: false,
   commandPaletteOpen: false,

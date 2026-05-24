@@ -207,6 +207,22 @@
             max-height: 400px;
         }
 
+        @media (max-width: 1100px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            .timeline-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* Checkbox styling */
         input[type="checkbox"] {
             accent-color: var(--color-blue);
@@ -217,21 +233,24 @@
 </head>
 <body>
     <!-- Top Header Bar -->
-    <header class="h-[60px] flex items-center justify-between px-6 border-b" style="border-color: var(--border-color); background-color: var(--bg-surface);">
-        <div class="flex items-center gap-3 w-1/4">
-            <div class="w-8 h-8 rounded bg-blue-500 flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+    <header class="h-[64px] flex items-center justify-between px-6 border-b" style="border-color: var(--border-color); background-color: var(--bg-surface);">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded bg-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             </div>
-            <span class="font-semibold tracking-wide text-sm text-gray-200">Demo Control</span>
+            <div>
+                <div class="font-semibold tracking-wide text-sm text-gray-200">ShopFast Ops Center</div>
+                <div class="text-[11px] text-gray-500">Pulse AI demo: AI-powered API monitoring & RCA</div>
+            </div>
         </div>
         
-        <div class="flex-1 px-4 flex items-center justify-center h-full">
+        <div class="flex-1 px-6 flex items-center justify-center h-full">
             <svg class="ecg-svg" preserveAspectRatio="none" viewBox="0 0 1000 40">
                 <path id="ecgPath" class="ecg-line ecg-normal" d="M0,20 L100,20 L110,10 L120,35 L130,5 L140,20 L300,20 L310,10 L320,35 L330,5 L340,20 L500,20 L510,10 L520,35 L530,5 L540,20 L700,20 L710,10 L720,35 L730,5 L740,20 L900,20 L910,10 L920,35 L930,5 L940,20 L1000,20"></path>
             </svg>
         </div>
 
-        <div class="w-1/4 flex items-center justify-end gap-4">
+        <div class="flex items-center justify-end gap-4">
             <div class="font-mono text-xs" style="color: var(--text-muted);">
                 UPTIME: <span id="uptimeCounter">00:00:00</span>
             </div>
@@ -243,106 +262,114 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 flex overflow-y-auto p-6 gap-6">
-        <!-- Left Column: Scenarios -->
-        <div class="w-[55%] flex flex-col gap-4 min-h-0">
-            <div>
-                <h2 class="text-lg font-semibold text-gray-100">Failure Scenarios</h2>
-                <p class="text-xs mt-1" style="color: var(--text-secondary);">Click to activate — auto-resets after 60s</p>
-            </div>
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <section class="main-grid flex-1 grid grid-cols-[320px_minmax(0,1fr)_360px] gap-6 p-6 overflow-hidden">
+            <!-- Left: Scenario Controls -->
+            <div class="flex flex-col gap-4 min-h-0">
+                <div class="rounded-xl border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-100">Failure scenarios</h2>
+                            <p class="text-xs mt-1" style="color: var(--text-secondary);">Trigger outages to show Pulse AI impact</p>
+                        </div>
+                        <div class="text-[10px] uppercase tracking-wider text-gray-500">Auto-reset 60s</div>
+                    </div>
+                    <div class="mt-4 flex flex-col gap-3" id="scenarioList">
+                        <!-- Scenario Cards Injected via JS -->
+                    </div>
+                </div>
 
-            <div id="scenarioList" class="flex flex-col gap-3 flex-1 overflow-y-auto pr-2">
-                <!-- Scenario Cards Injected via JS -->
-            </div>
-        </div>
-
-        <!-- Right Column -->
-        <div class="w-[45%] flex flex-col gap-6 min-h-0">
-            <!-- Top Half: Request Feed -->
-            <div class="flex-1 flex flex-col min-h-0 bg-opacity-50 rounded-lg border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
-                <h3 class="text-sm font-semibold mb-4 text-gray-200">Live requests</h3>
-                
-                <div class="flex-1 overflow-y-hidden relative">
-                    <div id="requestFeed" class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-2">
-                        <!-- Request Rows Injected via JS -->
+                <div class="rounded-xl border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-100">Demo mode</h3>
+                            <p class="text-[11px] text-gray-500">90-second guided story</p>
+                        </div>
+                        <div id="demoStatus" class="text-[10px] uppercase tracking-wider text-gray-500">Idle</div>
+                    </div>
+                    <div class="mt-4 flex gap-2">
+                        <button id="startDemo" class="flex-1 py-2 rounded text-xs font-semibold bg-blue-500/80 hover:bg-blue-500 text-white">Start demo</button>
+                        <button id="stopDemo" class="flex-1 py-2 rounded text-xs font-semibold bg-white/10 hover:bg-white/20 text-white">Stop</button>
+                    </div>
+                    <div class="mt-4 text-[11px] text-gray-500 leading-relaxed">
+                        Sequence: baseline traffic → payment outage → cascade failure → RCA generated → recovery.
                     </div>
                 </div>
             </div>
 
-            <!-- Bottom Half: Metrics -->
-            <div class="h-40 shrink-0 grid grid-cols-2 gap-4">
-                <div id="metric-total" class="rounded-lg border p-4 flex flex-col justify-center" style="background-color: var(--bg-card); border-color: var(--border-color);">
-                    <div class="text-xs mb-1" style="color: var(--text-muted);">Total requests</div>
-                    <div class="text-2xl font-mono" id="val-total">0</div>
+            <!-- Center: Live Request Feed -->
+            <div class="flex flex-col min-h-0 rounded-xl border" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                <div class="px-4 py-3 border-b flex items-center justify-between" style="border-color: var(--border-color);">
+                    <h3 class="text-sm font-semibold text-gray-200">Live request feed</h3>
+                    <div class="text-[11px] text-gray-500" id="trafficRate">~0 rpm</div>
                 </div>
-                <div id="metric-error" class="rounded-lg border p-4 flex flex-col justify-center" style="background-color: var(--bg-card); border-color: var(--border-color);">
-                    <div class="text-xs mb-1" style="color: var(--text-muted);">Error rate %</div>
-                    <div class="text-2xl font-mono text-red-400" id="val-error">0.0%</div>
-                </div>
-                <div id="metric-latency" class="rounded-lg border p-4 flex flex-col justify-center" style="background-color: var(--bg-card); border-color: var(--border-color);">
-                    <div class="text-xs mb-1" style="color: var(--text-muted);">Avg latency ms</div>
-                    <div class="text-2xl font-mono text-amber-400" id="val-latency">0ms</div>
-                </div>
-                <div id="metric-active" class="rounded-lg border p-4 flex flex-col justify-center" style="background-color: var(--bg-card); border-color: var(--border-color);">
-                    <div class="text-xs mb-1" style="color: var(--text-muted);">Active scenario</div>
-                    <div class="text-lg font-semibold text-blue-400" id="val-active">Normal Traffic</div>
+                <div class="flex-1 overflow-hidden">
+                    <div class="h-full overflow-y-auto" id="requestFeed"></div>
                 </div>
             </div>
-        </div>
+
+            <!-- Right: Metrics -->
+            <div class="flex flex-col gap-4 min-h-0">
+                <div class="grid grid-cols-2 gap-4">
+                    <div id="metric-rps" class="rounded-lg border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                        <div class="text-xs mb-1" style="color: var(--text-muted);">Requests/sec</div>
+                        <div class="text-2xl font-mono" id="val-rps">0.0</div>
+                    </div>
+                    <div id="metric-error" class="rounded-lg border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                        <div class="text-xs mb-1" style="color: var(--text-muted);">Error rate</div>
+                        <div class="text-2xl font-mono text-red-400" id="val-error">0.0%</div>
+                    </div>
+                    <div id="metric-latency" class="rounded-lg border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                        <div class="text-xs mb-1" style="color: var(--text-muted);">Avg latency</div>
+                        <div class="text-2xl font-mono text-amber-400" id="val-latency">0ms</div>
+                    </div>
+                    <div id="metric-status" class="rounded-lg border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                        <div class="text-xs mb-1" style="color: var(--text-muted);">Status</div>
+                        <div class="text-lg font-semibold text-green-400" id="val-status">Healthy</div>
+                    </div>
+                </div>
+
+                <div class="rounded-lg border p-4 flex-1" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-semibold text-gray-200">Service health</h4>
+                        <div id="activeScenario" class="text-[11px] text-gray-500">Normal traffic</div>
+                    </div>
+                    <div class="mt-4 flex flex-col gap-2 text-xs" id="serviceHealth"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Incident Timeline -->
+        <section class="px-6 pb-6">
+            <div class="rounded-xl border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-semibold text-gray-200">Incident timeline</h3>
+                    <div class="text-[11px] text-gray-500">Pulse AI incidents</div>
+                </div>
+                <div class="timeline-grid mt-3 grid grid-cols-4 gap-3" id="incidentTimeline"></div>
+            </div>
+        </section>
     </main>
 
-    <!-- Demo Script Panel -->
-    <div id="demoPanel" class="demo-panel cursor-pointer shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
-        <div class="h-8 flex items-center justify-between px-6 hover:bg-white/5 transition-colors" onclick="toggleDemoPanel(event)">
-            <span class="text-xs font-semibold tracking-wider uppercase text-gray-400">Demo Script <span id="panelIcon">▲</span></span>
-        </div>
-        <div class="px-6 pb-6 pt-2 cursor-default" onclick="event.stopPropagation()">
-            <div class="flex flex-col gap-3">
-                <label class="flex items-center gap-3 group cursor-pointer">
-                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
-                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 1: Show judges the dashboard (normal traffic flowing)</span>
-                </label>
-                <label class="flex items-center gap-3 group cursor-pointer">
-                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
-                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 2: Click 'Error Burst' — watch error rate spike</span>
-                </label>
-                <label class="flex items-center gap-3 group cursor-pointer">
-                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
-                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 3: In 10s, dashboard incident fires automatically</span>
-                </label>
-                <label class="flex items-center gap-3 group cursor-pointer">
-                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
-                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 4: Click 'Trigger AI RCA' in Pulse dashboard</span>
-                </label>
-                <label class="flex items-center gap-3 group cursor-pointer">
-                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
-                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 5: Show root cause + fix recommendation to judges</span>
-                </label>
-                <label class="flex items-center gap-3 group cursor-pointer">
-                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
-                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 6: Click 'Normal Traffic' — show recovery curve</span>
-                </label>
-            </div>
-        </div>
-    </div>
-
     <script>
-        // CONFIG & STATE
         const SCENARIOS = [
             { id: 'normal', name: 'Normal Traffic', desc: 'Healthy baseline, 2% error rate', color: '34, 197, 94', severity: 'normal', textColor: 'text-green-500' },
-            { id: 'error_burst', name: 'Error Burst', desc: '80% requests return 500 errors', color: '239, 68, 68', severity: 'critical', textColor: 'text-red-500' },
-            { id: 'latency_spike', name: 'Latency Spike', desc: '3000ms delay injected on all routes', color: '245, 158, 11', severity: 'warning', textColor: 'text-amber-500' },
-            { id: 'auth_storm', name: 'Auth Storm', desc: 'All auth routes return 401', color: '245, 158, 11', severity: 'warning', textColor: 'text-amber-500' },
-            { id: 'cascade', name: 'Cascade Failure', desc: '60% errors + 2000ms delay combined', color: '239, 68, 68', severity: 'critical', textColor: 'text-red-500' }
+            { id: 'payment_failure', name: 'Payment Gateway Failure', desc: '80% of /payments/process returns 500', color: '239, 68, 68', severity: 'critical', textColor: 'text-red-500' },
+            { id: 'latency_spike', name: 'Database Latency Spike', desc: 'Adds +3000ms on all routes', color: '245, 158, 11', severity: 'warning', textColor: 'text-amber-500' },
+            { id: 'auth_storm', name: 'Authentication Storm', desc: '/auth/login returns 401', color: '245, 158, 11', severity: 'warning', textColor: 'text-amber-500' },
+            { id: 'inventory_down', name: 'Inventory Service Down', desc: '/inventory returns 503', color: '239, 68, 68', severity: 'critical', textColor: 'text-red-500' },
+            { id: 'cascade', name: 'Cascade Failure', desc: 'Payments → Checkout → Inventory → Orders', color: '239, 68, 68', severity: 'critical', textColor: 'text-red-500' }
         ];
 
         const ROUTES = [
-            { method: 'POST', path: '/api/orders/checkout', weight: 0.30 },
-            { method: 'GET', path: '/api/auth/verify', weight: 0.25 },
-            { method: 'POST', path: '/api/payments/process', weight: 0.15 },
-            { method: 'GET', path: '/api/products/search', weight: 0.20 },
-            { method: 'GET', path: '/api/users/profile', weight: 0.10 }
+            { method: 'POST', path: '/api/cart/checkout', weight: 0.30 },
+            { method: 'POST', path: '/api/auth/login', weight: 0.20 },
+            { method: 'GET', path: '/api/products', weight: 0.20 },
+            { method: 'POST', path: '/api/payments/process', weight: 0.20 },
+            { method: 'GET', path: '/api/inventory', weight: 0.10 }
         ];
+
+        const REGIONS = ['US', 'EU', 'IN', 'APAC', 'SA'];
 
         let state = {
             activeMode: 'normal',
@@ -350,20 +377,34 @@
             countdownTimer: null,
             totalRequests: 0,
             recentRequests: [],
+            recentLatencies: [],
+            recentTimestamps: [],
+            demoTimer: null,
+            demoTimeouts: null,
+            demoRunning: false,
+            rcaTimer: null,
             startTime: Date.now()
         };
 
-        const API_BASE = 'http://localhost:3001';
+        const API_BASE = (() => {
+            if (window.location.protocol === 'file:') {
+                return 'http://localhost:3001';
+            }
+
+            if (window.location.origin.includes('localhost:3001')) {
+                return '';
+            }
+
+            return 'http://localhost:3001';
+        })();
 
         // INITIALIZATION
         document.addEventListener('DOMContentLoaded', () => {
-            renderScenarios();
             updateUptime();
             setInterval(updateUptime, 1000);
             
             // Start traffic generator
-            generateTraffic();
-            setInterval(generateTraffic, 2000);
+            scheduleTraffic();
             
             // Poll status
             pollStatus();
@@ -374,21 +415,17 @@
         function renderScenarios() {
             const list = document.getElementById('scenarioList');
             list.innerHTML = SCENARIOS.map(s => `
-                <div id="card-${s.id}" class="scenario-card rounded-lg h-20 flex items-center px-5 cursor-pointer select-none" style="--active-rgb: ${s.color};" onclick="activateScenario('${s.id}')">
+                <div id="card-${s.id}" class="scenario-card rounded-lg h-20 flex items-center px-4 cursor-pointer select-none" style="--active-rgb: ${s.color};" onclick="activateScenario('${s.id}')">
                     <div class="scenario-accent-border"></div>
                     <div class="flex-1">
-                        <div class="font-semibold text-[15px] mb-1 text-gray-100">${s.name}</div>
+                        <div class="font-semibold text-[14px] mb-1 text-gray-100">${s.name}</div>
                         <div class="font-mono text-xs text-gray-400">${s.desc}</div>
                     </div>
                     <div class="flex flex-col items-end gap-1">
                         <div class="text-[10px] uppercase font-bold tracking-wider ${s.textColor}">${s.severity}</div>
-                        <button id="btn-${s.id}" class="scenario-btn text-xs font-semibold px-4 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white border border-white/10" aria-label="Activate ${s.name}">
-                            ACTIVATE
-                        </button>
+                        <button id="btn-${s.id}" class="scenario-btn text-xs font-semibold px-3 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white border border-white/10" aria-label="Activate ${s.name}">Trigger</button>
                     </div>
-                    <div id="timer-${s.id}" class="hidden absolute bottom-2 right-5 text-[10px] font-mono text-gray-400">
-                        Auto-reset in 60s...
-                    </div>
+                    <div id="timer-${s.id}" class="hidden absolute bottom-2 right-4 text-[10px] font-mono text-gray-400">Auto-reset in 60s...</div>
                 </div>
             `).join('');
             updateScenarioUI();
@@ -419,7 +456,7 @@
                     } else {
                         card.classList.remove('dimmed');
                     }
-                    btn.innerHTML = 'ACTIVATE';
+                    btn.innerHTML = 'Trigger';
                     btn.className = 'scenario-btn text-xs font-semibold px-4 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white border border-white/10';
                     btn.style.backgroundColor = '';
                     timer.classList.add('hidden');
@@ -447,22 +484,36 @@
                 ecgPath.style.stroke = `rgb(${activeData.color})`;
             }
 
-            // Update Active Metric Card
-            updateMetricDisplay('active', activeData.name);
+            // Update active scenario label
+            const activeLabel = document.getElementById('activeScenario');
+            activeLabel.textContent = activeData.name;
         }
 
         // ACTIONS
-        async function activateScenario(id) {
+        async function activateScenario(id, options = {}) {
             if (state.activeMode === id) return;
-            
-            // Optimistic UI update
+            const { fromDemo = false } = options;
+
+            if (!fromDemo) {
+                stopDemo();
+            }
             state.activeMode = id;
             if (id !== 'normal') {
-                startCountdown();
+                if (!state.demoRunning) {
+                    startCountdown();
+                }
+                scheduleRca();
             } else {
                 stopCountdown();
+                clearRca();
             }
             updateScenarioUI();
+
+            const activeData = SCENARIOS.find((scenario) => scenario.id === id);
+            if (activeData) {
+                const severity = id === 'normal' ? 'normal' : activeData.severity === 'critical' ? 'critical' : 'warning';
+                addIncident(activeData.name, activeData.desc, severity);
+            }
 
             try {
                 await fetch(`${API_BASE}/chaos/${id}`, { method: 'POST' });
@@ -482,6 +533,7 @@
                             startCountdown();
                         } else if (data.mode === 'normal') {
                             stopCountdown();
+                            clearRca();
                         }
                         updateScenarioUI();
                     }
@@ -507,6 +559,19 @@
             state.countdown = 0;
         }
 
+        function scheduleRca() {
+            clearRca();
+            state.rcaTimer = setTimeout(() => {
+                addIncident('AI RCA generated', 'Probable cause: Payment gateway timeout', 'critical');
+                addIncident('Suggested fix', 'Rollback last gateway deploy', 'warning');
+            }, 8000);
+        }
+
+        function clearRca() {
+            if (state.rcaTimer) clearTimeout(state.rcaTimer);
+            state.rcaTimer = null;
+        }
+
         // TRAFFIC GENERATOR
         function pickRoute() {
             const rand = Math.random();
@@ -518,11 +583,19 @@
             return ROUTES[0];
         }
 
+        function scheduleTraffic() {
+            const interval = Math.floor(120 + Math.random() * 480);
+            setTimeout(async () => {
+                await generateTraffic();
+                scheduleTraffic();
+            }, interval);
+        }
+
         async function generateTraffic() {
             const route = pickRoute();
             const start = performance.now();
             let status = 0;
-            
+
             try {
                 const res = await fetch(`${API_BASE}${route.path}`, {
                     method: route.method,
@@ -532,14 +605,16 @@
             } catch (err) {
                 status = -1; // Offline or failed
             }
-            
+
             const latency = Math.round(performance.now() - start);
-            addRequestToFeed(route.method, route.path, status, latency);
+            const userId = `user_${Math.floor(1000 + Math.random() * 9000)}`;
+            const region = REGIONS[Math.floor(Math.random() * REGIONS.length)];
+            addRequestToFeed(route.method, route.path, status, latency, userId, region);
             updateMetrics(status, latency);
         }
 
         // REQUEST FEED & METRICS
-        function addRequestToFeed(method, path, status, latency) {
+        function addRequestToFeed(method, path, status, latency, userId, region) {
             const feed = document.getElementById('requestFeed');
             const now = new Date();
             const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
@@ -566,18 +641,20 @@
             const methodBg = method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400';
 
             const row = document.createElement('div');
-            row.className = `request-row flex items-center py-1.5 px-3 border-l-2 ${rowBorder} bg-white/5 rounded text-[13px] font-mono gap-3 mb-1 shrink-0`;
+            row.className = `request-row flex items-center gap-3 py-2 px-4 border-l-2 ${rowBorder} bg-white/5 text-[12px] font-mono`; 
             row.innerHTML = `
                 <span class="text-gray-500 w-16">${timeStr}</span>
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${methodBg} w-10 text-center">${method}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${methodBg} w-12 text-center">${method}</span>
                 <span class="text-gray-200 flex-1 truncate">${path}</span>
+                <span class="text-gray-500 w-20">${userId}</span>
+                <span class="text-gray-500 w-10">${region}</span>
                 <span class="${statusColor} w-10 text-right">${statusText}</span>
                 <span class="text-gray-500 w-14 text-right">${latency}ms</span>
             `;
 
             feed.prepend(row);
 
-            while (feed.children.length > 15) {
+            while (feed.children.length > 18) {
                 feed.removeChild(feed.lastChild);
             }
         }
@@ -587,7 +664,11 @@
             state.recentRequests.push({ status, latency });
             if (state.recentRequests.length > 50) state.recentRequests.shift();
 
-            updateMetricDisplay('total', state.totalRequests);
+            state.recentLatencies.push(latency);
+            if (state.recentLatencies.length > 50) state.recentLatencies.shift();
+
+            state.recentTimestamps.push(Date.now());
+            state.recentTimestamps = state.recentTimestamps.filter((t) => Date.now() - t < 10000);
 
             if (state.recentRequests.length > 0) {
                 const errors = state.recentRequests.filter(r => r.status >= 500 || r.status === -1).length;
@@ -603,8 +684,8 @@
                     cardErr.className = 'text-2xl font-mono text-green-500';
                 }
 
-                const sumLat = state.recentRequests.reduce((acc, r) => acc + r.latency, 0);
-                const avgLat = Math.round(sumLat / state.recentRequests.length);
+                const sumLat = state.recentLatencies.reduce((acc, value) => acc + value, 0);
+                const avgLat = Math.round(sumLat / state.recentLatencies.length);
                 updateMetricDisplay('latency', `${avgLat}ms`);
                 
                 const cardLat = document.getElementById('val-latency');
@@ -615,6 +696,13 @@
                 } else {
                     cardLat.className = 'text-2xl font-mono text-green-500';
                 }
+
+                const rps = (state.recentTimestamps.length / 10).toFixed(1);
+                updateMetricDisplay('rps', rps);
+                const rpm = Math.round(rps * 60);
+                document.getElementById('trafficRate').textContent = `~${rpm} rpm`;
+
+                updateStatus(errRate, avgLat);
             }
         }
 
@@ -629,6 +717,24 @@
             }
         }
 
+        function updateStatus(errRate, avgLat) {
+            const statusEl = document.getElementById('val-status');
+            const err = Number(errRate);
+            if (err > 10 || avgLat > 1200 || state.activeMode !== 'normal') {
+                statusEl.textContent = 'Degraded';
+                statusEl.className = 'text-lg font-semibold text-amber-400';
+            }
+            if (err > 25 || avgLat > 2000 || state.activeMode === 'cascade') {
+                statusEl.textContent = 'Critical';
+                statusEl.className = 'text-lg font-semibold text-red-500';
+            }
+            if (state.activeMode === 'normal' && err <= 5 && avgLat <= 400) {
+                statusEl.textContent = 'Healthy';
+                statusEl.className = 'text-lg font-semibold text-green-400';
+            }
+            updateServiceHealth();
+        }
+
         function updateUptime() {
             const diff = Math.floor((Date.now() - state.startTime) / 1000);
             const h = Math.floor(diff / 3600).toString().padStart(2, '0');
@@ -637,16 +743,104 @@
             document.getElementById('uptimeCounter').textContent = `${h}:${m}:${s}`;
         }
 
-        function toggleDemoPanel(e) {
-            const panel = document.getElementById('demoPanel');
-            const icon = document.getElementById('panelIcon');
-            panel.classList.toggle('expanded');
-            if (panel.classList.contains('expanded')) {
-                icon.textContent = '▼';
-            } else {
-                icon.textContent = '▲';
+        function updateServiceHealth() {
+            const list = document.getElementById('serviceHealth');
+            const healthItems = [
+                { name: 'Authentication', status: state.activeMode === 'auth_storm' ? 'Down' : 'Healthy' },
+                { name: 'Orders', status: state.activeMode === 'cascade' ? 'Degraded' : 'Healthy' },
+                { name: 'Payments', status: ['payment_failure', 'cascade'].includes(state.activeMode) ? 'Down' : 'Healthy' },
+                { name: 'Inventory', status: ['inventory_down', 'cascade'].includes(state.activeMode) ? 'Down' : 'Healthy' },
+                { name: 'Checkout', status: state.activeMode === 'cascade' ? 'Degraded' : 'Healthy' },
+                { name: 'Search', status: 'Healthy' }
+            ];
+
+            list.innerHTML = healthItems.map((item) => {
+                const color = item.status === 'Healthy' ? 'text-green-400' : item.status === 'Degraded' ? 'text-amber-400' : 'text-red-500';
+                return `
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300">${item.name}</span>
+                        <span class="${color} font-semibold">${item.status}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function addIncident(title, detail, severity) {
+            const timeline = document.getElementById('incidentTimeline');
+            const now = new Date();
+            const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const color = severity === 'critical' ? 'border-red-500/60 text-red-400' : severity === 'warning' ? 'border-amber-500/60 text-amber-400' : 'border-green-500/60 text-green-400';
+
+            const card = document.createElement('div');
+            card.className = `rounded-lg border p-3 bg-white/5 ${color} request-row`;
+            card.innerHTML = `
+                <div class="text-[10px] text-gray-500">${time}</div>
+                <div class="text-sm font-semibold">${title}</div>
+                <div class="text-[11px] text-gray-400">${detail}</div>
+            `;
+
+            timeline.prepend(card);
+            while (timeline.children.length > 8) {
+                timeline.removeChild(timeline.lastChild);
             }
         }
+
+        function initTimeline() {
+            addIncident('System healthy', 'Normal traffic flowing', 'normal');
+        }
+
+        function bindDemoButtons() {
+            document.getElementById('startDemo').addEventListener('click', startDemo);
+            document.getElementById('stopDemo').addEventListener('click', stopDemo);
+        }
+
+        function startDemo() {
+            if (state.demoRunning) return;
+            state.demoRunning = true;
+            document.getElementById('demoStatus').textContent = 'Running';
+            stopCountdown();
+            clearRca();
+
+            const steps = [
+                { delay: 0, action: () => activateScenario('normal', { fromDemo: true }), event: ['Baseline traffic', 'Pulse AI monitoring all services', 'normal'] },
+                { delay: 12000, action: () => activateScenario('payment_failure', { fromDemo: true }), event: ['Payment gateway failure', 'Payment API error rate spikes', 'critical'] },
+                { delay: 26000, action: () => addIncident('Pulse incident detected', 'Checkout failures correlate with payments', 'warning') },
+                { delay: 36000, action: () => activateScenario('cascade', { fromDemo: true }), event: ['Cascade failure', 'Checkout + inventory timeouts', 'critical'] },
+                { delay: 52000, action: () => addIncident('AI RCA generated', 'Probable cause: payment gateway timeout', 'critical') },
+                { delay: 68000, action: () => activateScenario('normal', { fromDemo: true }), event: ['Recovery', 'Roll back gateway deployment', 'normal'] },
+                { delay: 90000, action: stopDemo, event: ['Demo complete', 'System stabilized', 'normal'] }
+            ];
+
+            let elapsed = 0;
+            state.demoTimer = setInterval(() => {
+                elapsed += 1000;
+            }, 1000);
+
+            state.demoTimeouts = steps.map((step) => setTimeout(() => {
+                    if (!state.demoRunning) return;
+                    step.action();
+                    if (step.event) {
+                        addIncident(step.event[0], step.event[1], step.event[2]);
+                    }
+                }, step.delay));
+        }
+
+        function stopDemo() {
+            if (!state.demoRunning) return;
+            state.demoRunning = false;
+            document.getElementById('demoStatus').textContent = 'Idle';
+            if (state.demoTimer) clearInterval(state.demoTimer);
+            state.demoTimer = null;
+            if (state.demoTimeouts) {
+                state.demoTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
+                state.demoTimeouts = null;
+            }
+        }
+
+        renderScenarios();
+        updateServiceHealth();
+        initTimeline();
+        bindDemoButtons();
     </script>
 </body>
 </html>

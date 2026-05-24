@@ -1,10 +1,9 @@
 /**
  * Dashboard view
  */
-import { ENDPOINTS, INCIDENTS } from '../services/mockData.js';
+import { DEMO_ENDPOINTS } from '../services/demoConfig.js';
 import { getState, subscribe } from '../state.js';
 import { createLineChart, lineDataset, CHART_COLORS } from '../utils/charts.js';
-import { animateValue } from '../utils/animate.js';
 import { registerCharts } from '../services/simulation.js';
 import { startAnomalyDetection } from '../services/anomalyEngine.js';
 import { createAnomalyCard } from '../components/AnomalyCard.js';
@@ -38,6 +37,16 @@ export default {
               <div class="metric-label">P95 Latency</div>
               <div class="metric-value text-amber" id="metric-latency">0ms</div>
               <div class="metric-trend text-amber">Performance degrading</div>
+            </div>
+            <div class="metric-card status-blue animate-in stagger-4">
+              <div class="metric-label">Requests / Hour</div>
+              <div class="metric-value text-blue" id="metric-requests-hour">0</div>
+              <div class="metric-trend text-blue"><i class="ti ti-activity"></i> From backend aggregate</div>
+            </div>
+            <div class="metric-card status-purple animate-in stagger-5">
+              <div class="metric-label">Errors / Hour</div>
+              <div class="metric-value text-purple" id="metric-errors-hour">0</div>
+              <div class="metric-trend text-purple"><i class="ti ti-alert-octagon"></i> Hourly failure count</div>
             </div>
           </div>
 
@@ -109,16 +118,23 @@ export default {
     renderEndpointsTable();
     renderIncidentsFeed();
     initDashboardCharts();
-    animateMetrics();
     startAnomalyMonitor();
 
     // Subscribe to incident changes
-    const unsub = subscribe('incidents', () => {
+    const unsubIncidents = subscribe('incidents', () => {
       renderIncidentsFeed();
+      renderEndpointsTable();
+    });
+
+    const unsubMetrics = subscribe('metrics', (metrics) => {
+      renderEndpointsTable();
+      renderMetricCards(metrics);
+      syncMetricCharts(metrics);
     });
 
     return () => {
-      unsub();
+      unsubIncidents();
+      unsubMetrics();
       if (stopAnomalies) { stopAnomalies(); stopAnomalies = null; }
       Object.values(charts).forEach(c => c.destroy?.());
       charts = {};
@@ -130,19 +146,27 @@ function renderEndpointsTable() {
   const tbody = document.getElementById('endpoints-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = ENDPOINTS.map(ep => {
+  const metrics = getState('metrics') || {};
+  const baseLatency = Math.round(metrics.avgLatencyMs ?? metrics.avgLatency ?? 0);
+  const baseError = Number(metrics.errorRate || 0);
+
+  tbody.innerHTML = DEMO_ENDPOINTS.map(ep => {
+    const jitter = Math.round((Math.random() - 0.5) * 120);
+    const latency = Math.max(0, baseLatency + jitter);
+    const error = Math.max(0, baseError + (Math.random() - 0.5) * 2);
+    const status = error > 10 || latency > 1200 ? 'DEGRADED' : error > 2 || latency > 600 ? 'SLOW' : 'HEALTHY';
     const methodClass = `method-${ep.method.toLowerCase()}`;
     let badge = '';
-    if (ep.status === 'HEALTHY') badge = '<span class="badge bg-green">Healthy</span>';
-    else if (ep.status === 'WARNING' || ep.status === 'SLOW') badge = `<span class="badge bg-amber">${ep.status}</span>`;
-    else badge = `<span class="badge bg-red">${ep.status}</span>`;
+    if (status === 'HEALTHY') badge = '<span class="badge bg-green">Healthy</span>';
+    else if (status === 'SLOW') badge = '<span class="badge bg-amber">SLOW</span>';
+    else badge = '<span class="badge bg-red">DEGRADED</span>';
 
     return `
       <tr>
         <td style="color:var(--text-primary)">${ep.path}</td>
         <td class="${methodClass}">${ep.method}</td>
-        <td style="color:${ep.latency > 1000 ? 'var(--warning-amber)' : 'inherit'}">${ep.latency}ms</td>
-        <td style="color:${ep.error > 5 ? 'var(--alert-red)' : 'inherit'}">${ep.error}%</td>
+        <td style="color:${latency > 1000 ? 'var(--warning-amber)' : 'inherit'}">${latency}ms</td>
+        <td style="color:${error > 5 ? 'var(--alert-red)' : 'inherit'}">${error.toFixed(1)}%</td>
         <td>${badge}</td>
         <td style="color:var(--text-secondary)">Just now</td>
       </tr>
@@ -158,7 +182,7 @@ function renderIncidentsFeed() {
   const feed = document.getElementById('dashboard-feed');
   if (!feed) return;
 
-  const allIncidents = getState('incidents') || INCIDENTS;
+  const allIncidents = getState('incidents') || [];
 
   feed.innerHTML = allIncidents.slice(0, 5).map((inc, i) => {
     const icons = {
@@ -209,16 +233,46 @@ function initDashboardCharts() {
   registerCharts(charts);
 }
 
-function animateMetrics() {
-  const animate = (id, from, to, dur, fmt) => {
-    const el = document.getElementById(id);
-    if (el) animateValue(el, from, to, dur, fmt);
-  };
+function renderMetricCards(metrics = {}) {
+  const p95 = Number(metrics.p95LatencyMs ?? metrics.p95 ?? metrics.avgLatencyMs ?? metrics.avgLatency ?? 0);
+  const requestsLastHour = Number(metrics.requestsLastHour ?? 0);
+  const errorsLastHour = Number(metrics.errorsLastHour ?? 0);
 
-  setTimeout(() => animate('metric-uptime', 0, 99.2, 1500, v => v.toFixed(1) + '%'), 0);
-  setTimeout(() => animate('metric-error', 0, 8.4, 1500, v => v.toFixed(1) + '%'), 200);
-  setTimeout(() => animate('metric-latency', 0, 1842, 1500, v => Math.floor(v) + 'ms'), 400);
-  setTimeout(() => animate('metric-incidents', 0, 3, 1000, v => Math.floor(v).toString()), 600);
+  const p95El = document.getElementById('metric-latency');
+  const requestsEl = document.getElementById('metric-requests-hour');
+  const errorsEl = document.getElementById('metric-errors-hour');
+
+  if (p95El) p95El.innerText = `${Math.round(p95)}ms`;
+  if (requestsEl) requestsEl.innerText = requestsLastHour.toLocaleString();
+  if (errorsEl) errorsEl.innerText = errorsLastHour.toLocaleString();
+}
+
+function syncMetricCharts(metrics = {}) {
+  const latencySeries = Array.isArray(metrics.latencySeries) ? metrics.latencySeries : [];
+  const errorSeries = Array.isArray(metrics.errorSeries) ? metrics.errorSeries : [];
+
+  if (charts.latency) {
+    if (latencySeries.length > 0) {
+      charts.latency.data.labels = latencySeries.map((point) => formatSeriesLabel(point.t));
+      charts.latency.data.datasets[0].data = latencySeries.map((point) => Number(point.value || 0));
+      charts.latency.update('none');
+    }
+  }
+
+  if (charts.error) {
+    if (errorSeries.length > 0) {
+      charts.error.data.labels = errorSeries.map((point) => formatSeriesLabel(point.t));
+      charts.error.data.datasets[0].data = errorSeries.map((point) => Number(point.value || 0));
+      charts.error.update('none');
+    }
+  }
+}
+
+function formatSeriesLabel(timestamp) {
+  const value = Number(timestamp || 0);
+  if (!Number.isFinite(value) || value <= 0) return '';
+  const date = new Date(value);
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
 function startAnomalyMonitor() {

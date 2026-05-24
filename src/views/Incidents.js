@@ -1,9 +1,9 @@
 /**
  * Incidents view
  */
-import { INCIDENTS } from '../services/mockData.js';
 import { getState, subscribe } from '../state.js';
 import { navigate } from '../router.js';
+import { resolveIncident } from '../services/pulseBackend.js';
 
 let activeFilter = 'all';
 
@@ -48,7 +48,7 @@ function renderIncidents() {
   const list = document.getElementById('incidents-list');
   if (!list) return;
 
-  const allIncidents = getState('incidents') || INCIDENTS;
+  const allIncidents = getState('incidents') || [];
   const filtered = activeFilter === 'all' ? allIncidents : allIncidents.filter(i => i.severity === activeFilter);
 
   if (filtered.length === 0) {
@@ -74,6 +74,10 @@ function renderIncidents() {
       actionBtn = `<button class="btn-rca" data-action="rca"><i class="ti ti-brain"></i> Trigger AI RCA</button>`;
     } else if (inc.rcaReady && inc.severity === 'resolved') {
       actionBtn = `<span class="badge" style="border:1px solid var(--ai-purple);color:var(--ai-purple)"><i class="ti ti-brain" style="margin-right:4px"></i>RCA Ready</span>`;
+    }
+
+    if (inc.severity !== 'resolved') {
+      actionBtn += ` <button class="btn-rca" data-action="resolve" style="margin-left:8px;">Resolve</button>`;
     }
 
     const causeParts = inc.cause.split('—').map(s => s.trim());
@@ -153,4 +157,31 @@ function renderIncidents() {
       body.appendChild(rcaPanel);
     });
   });
+
+  list.querySelectorAll('[data-action="resolve"]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const card = e.target.closest('.incident-card');
+      const endpointLabel = card?.querySelector('.font-mono')?.textContent || 'incident';
+      const incident = findIncidentByEndpoint(endpointLabel);
+      if (!incident) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Resolving...';
+
+      try {
+        await resolveIncident(incident.id);
+        incident.severity = 'resolved';
+        incident.duration = 'Resolved';
+        renderIncidents();
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = 'Resolve';
+      }
+    });
+  });
+}
+
+function findIncidentByEndpoint(endpointLabel) {
+  const allIncidents = getState('incidents') || [];
+  return allIncidents.find((incident) => incident.endpoint === endpointLabel || incident.endpoint === endpointLabel.trim());
 }
