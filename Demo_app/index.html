@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse AI Demo Control</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --bg-page: #080b12;
+            --bg-card: #0e1219;
+            --bg-surface: #141922;
+            --bg-hover: #1c2333;
+            
+            --color-blue: #3b82f6;
+            --color-red: #ef4444;
+            --color-amber: #f59e0b;
+            --color-green: #22c55e;
+            --color-purple: #8b5cf6;
+            
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --border-color: #ffffff12;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            font-family: 'Sora', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Scrollbar styles */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* ECG Animation */
+        .ecg-svg {
+            width: 100%;
+            height: 40px;
+            overflow: hidden;
+        }
+        
+        .ecg-line {
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: ecg-scroll 3s linear infinite;
+            transition: stroke 0.3s ease, animation-duration 0.3s ease;
+        }
+
+        @keyframes ecg-scroll {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .ecg-normal {
+            stroke: var(--color-green);
+            animation-duration: 3s;
+        }
+
+        .ecg-alert {
+            stroke: var(--color-red);
+            animation-duration: 1.5s;
+            transform-origin: center;
+            transform: scaleY(1.5);
+        }
+
+        /* Scenario Card Styles */
+        .scenario-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenario-card:hover {
+            background-color: var(--bg-hover);
+        }
+
+        .scenario-card.active {
+            border-width: 1px;
+            border-style: solid;
+            background-color: rgba(var(--active-rgb), 0.08);
+            border-color: rgb(var(--active-rgb));
+        }
+
+        .scenario-card.dimmed {
+            opacity: 0.4;
+        }
+
+        .scenario-accent-border {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background-color: rgb(var(--active-rgb));
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+
+        .scenario-card.active .scenario-accent-border {
+            opacity: 1;
+        }
+
+        /* Button Pulse Animation */
+        @keyframes pulse-btn {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .btn-pulse {
+            animation: pulse-btn 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .scenario-btn {
+            transition: transform 150ms ease, background-color 150ms ease;
+        }
+        .scenario-btn:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+        /* Mode Badge Pulse */
+        @keyframes mode-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(var(--badge-rgb), 0.7); }
+            50% { transform: scale(1.3); box-shadow: 0 0 0 4px rgba(var(--badge-rgb), 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(var(--badge-rgb), 0); }
+        }
+        
+        .mode-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: rgb(var(--badge-rgb));
+            animation: mode-pulse 1.5s infinite;
+        }
+
+        /* Request Feed Animation */
+        @keyframes slide-in {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        .request-row {
+            animation: slide-in 200ms ease forwards;
+        }
+
+        /* Metric Flash */
+        @keyframes metric-flash {
+            0% { border-color: var(--border-color); }
+            50% { border-color: var(--color-blue); background-color: rgba(59, 130, 246, 0.05); }
+            100% { border-color: var(--border-color); }
+        }
+        .metric-flash {
+            animation: metric-flash 600ms ease;
+        }
+
+        /* Demo Script Panel */
+        .demo-panel {
+            background-color: var(--bg-surface);
+            border-top: 1px solid var(--border-color);
+            transition: max-height 0.3s ease-in-out;
+            max-height: 32px;
+            overflow: hidden;
+            z-index: 50;
+            flex-shrink: 0;
+        }
+        .demo-panel.expanded {
+            max-height: 400px;
+        }
+
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            accent-color: var(--color-blue);
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Header Bar -->
+    <header class="h-[60px] flex items-center justify-between px-6 border-b" style="border-color: var(--border-color); background-color: var(--bg-surface);">
+        <div class="flex items-center gap-3 w-1/4">
+            <div class="w-8 h-8 rounded bg-blue-500 flex items-center justify-center">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            </div>
+            <span class="font-semibold tracking-wide text-sm text-gray-200">Demo Control</span>
+        </div>
+        
+        <div class="flex-1 px-4 flex items-center justify-center h-full">
+            <svg class="ecg-svg" preserveAspectRatio="none" viewBox="0 0 1000 40">
+                <path id="ecgPath" class="ecg-line ecg-normal" d="M0,20 L100,20 L110,10 L120,35 L130,5 L140,20 L300,20 L310,10 L320,35 L330,5 L340,20 L500,20 L510,10 L520,35 L530,5 L540,20 L700,20 L710,10 L720,35 L730,5 L740,20 L900,20 L910,10 L920,35 L930,5 L940,20 L1000,20"></path>
+            </svg>
+        </div>
+
+        <div class="w-1/4 flex items-center justify-end gap-4">
+            <div class="font-mono text-xs" style="color: var(--text-muted);">
+                UPTIME: <span id="uptimeCounter">00:00:00</span>
+            </div>
+            <div id="modeBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold" style="background-color: rgba(34, 197, 94, 0.1); color: var(--color-green); --badge-rgb: 34, 197, 94;">
+                <div class="mode-dot"></div>
+                <span id="modeBadgeText">NORMAL</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex overflow-y-auto p-6 gap-6">
+        <!-- Left Column: Scenarios -->
+        <div class="w-[55%] flex flex-col gap-4 min-h-0">
+            <div>
+                <h2 class="text-lg font-semibold text-gray-100">Failure Scenarios</h2>
+                <p class="text-xs mt-1" style="color: var(--text-secondary);">Click to activate — auto-resets after 60s</p>
+            </div>
+
+            <div id="scenarioList" class="flex flex-col gap-3 flex-1 overflow-y-auto pr-2">
+                <!-- Scenario Cards Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="w-[45%] flex flex-col gap-6 min-h-0">
+            <!-- Top Half: Request Feed -->
+            <div class="flex-1 flex flex-col min-h-0 bg-opacity-50 rounded-lg border p-4" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                <h3 class="text-sm font-semibold mb-4 text-gray-200">Live requests</h3>
+                
+                <div class="flex-1 overflow-y-hidden relative">
+                    <div id="requestFeed" class="absolute inset-0 flex flex-col gap-1 overflow-y-auto pr-2">
+                        <!-- Request Rows Injected via JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Half: Metrics -->
+            <div class="h-40 shrink-0 grid grid-cols-2 gap-4">
+                <div id="metric-total" class="rounded-lg border p-4 flex flex-col justify-center" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                    <div class="text-xs mb-1" style="color: var(--text-muted);">Total requests</div>
+                    <div class="text-2xl font-mono" id="val-total">0</div>
+                </div>
+                <div id="metric-error" class="rounded-lg border p-4 flex flex-col justify-center" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                    <div class="text-xs mb-1" style="color: var(--text-muted);">Error rate %</div>
+                    <div class="text-2xl font-mono text-red-400" id="val-error">0.0%</div>
+                </div>
+                <div id="metric-latency" class="rounded-lg border p-4 flex flex-col justify-center" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                    <div class="text-xs mb-1" style="color: var(--text-muted);">Avg latency ms</div>
+                    <div class="text-2xl font-mono text-amber-400" id="val-latency">0ms</div>
+                </div>
+                <div id="metric-active" class="rounded-lg border p-4 flex flex-col justify-center" style="background-color: var(--bg-card); border-color: var(--border-color);">
+                    <div class="text-xs mb-1" style="color: var(--text-muted);">Active scenario</div>
+                    <div class="text-lg font-semibold text-blue-400" id="val-active">Normal Traffic</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Demo Script Panel -->
+    <div id="demoPanel" class="demo-panel cursor-pointer shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+        <div class="h-8 flex items-center justify-between px-6 hover:bg-white/5 transition-colors" onclick="toggleDemoPanel(event)">
+            <span class="text-xs font-semibold tracking-wider uppercase text-gray-400">Demo Script <span id="panelIcon">▲</span></span>
+        </div>
+        <div class="px-6 pb-6 pt-2 cursor-default" onclick="event.stopPropagation()">
+            <div class="flex flex-col gap-3">
+                <label class="flex items-center gap-3 group cursor-pointer">
+                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
+                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 1: Show judges the dashboard (normal traffic flowing)</span>
+                </label>
+                <label class="flex items-center gap-3 group cursor-pointer">
+                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
+                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 2: Click 'Error Burst' — watch error rate spike</span>
+                </label>
+                <label class="flex items-center gap-3 group cursor-pointer">
+                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
+                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 3: In 10s, dashboard incident fires automatically</span>
+                </label>
+                <label class="flex items-center gap-3 group cursor-pointer">
+                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
+                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 4: Click 'Trigger AI RCA' in Pulse dashboard</span>
+                </label>
+                <label class="flex items-center gap-3 group cursor-pointer">
+                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
+                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 5: Show root cause + fix recommendation to judges</span>
+                </label>
+                <label class="flex items-center gap-3 group cursor-pointer">
+                    <input type="checkbox" class="rounded border-gray-600 bg-gray-800">
+                    <span class="text-sm text-gray-300 group-hover:text-white transition-colors">Step 6: Click 'Normal Traffic' — show recovery curve</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG & STATE
+        const SCENARIOS = [
+            { id: 'normal', name: 'Normal Traffic', desc: 'Healthy baseline, 2% error rate', color: '34, 197, 94', severity: 'normal', textColor: 'text-green-500' },
+            { id: 'error_burst', name: 'Error Burst', desc: '80% requests return 500 errors', color: '239, 68, 68', severity: 'critical', textColor: 'text-red-500' },
+            { id: 'latency_spike', name: 'Latency Spike', desc: '3000ms delay injected on all routes', color: '245, 158, 11', severity: 'warning', textColor: 'text-amber-500' },
+            { id: 'auth_storm', name: 'Auth Storm', desc: 'All auth routes return 401', color: '245, 158, 11', severity: 'warning', textColor: 'text-amber-500' },
+            { id: 'cascade', name: 'Cascade Failure', desc: '60% errors + 2000ms delay combined', color: '239, 68, 68', severity: 'critical', textColor: 'text-red-500' }
+        ];
+
+        const ROUTES = [
+            { method: 'POST', path: '/api/orders/checkout', weight: 0.30 },
+            { method: 'GET', path: '/api/auth/verify', weight: 0.25 },
+            { method: 'POST', path: '/api/payments/process', weight: 0.15 },
+            { method: 'GET', path: '/api/products/search', weight: 0.20 },
+            { method: 'GET', path: '/api/users/profile', weight: 0.10 }
+        ];
+
+        let state = {
+            activeMode: 'normal',
+            countdown: 0,
+            countdownTimer: null,
+            totalRequests: 0,
+            recentRequests: [],
+            startTime: Date.now()
+        };
+
+        const API_BASE = 'http://localhost:3001';
+
+        // INITIALIZATION
+        document.addEventListener('DOMContentLoaded', () => {
+            renderScenarios();
+            updateUptime();
+            setInterval(updateUptime, 1000);
+            
+            // Start traffic generator
+            generateTraffic();
+            setInterval(generateTraffic, 2000);
+            
+            // Poll status
+            pollStatus();
+            setInterval(pollStatus, 3000);
+        });
+
+        // UI RENDERING
+        function renderScenarios() {
+            const list = document.getElementById('scenarioList');
+            list.innerHTML = SCENARIOS.map(s => `
+                <div id="card-${s.id}" class="scenario-card rounded-lg h-20 flex items-center px-5 cursor-pointer select-none" style="--active-rgb: ${s.color};" onclick="activateScenario('${s.id}')">
+                    <div class="scenario-accent-border"></div>
+                    <div class="flex-1">
+                        <div class="font-semibold text-[15px] mb-1 text-gray-100">${s.name}</div>
+                        <div class="font-mono text-xs text-gray-400">${s.desc}</div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <div class="text-[10px] uppercase font-bold tracking-wider ${s.textColor}">${s.severity}</div>
+                        <button id="btn-${s.id}" class="scenario-btn text-xs font-semibold px-4 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white border border-white/10" aria-label="Activate ${s.name}">
+                            ACTIVATE
+                        </button>
+                    </div>
+                    <div id="timer-${s.id}" class="hidden absolute bottom-2 right-5 text-[10px] font-mono text-gray-400">
+                        Auto-reset in 60s...
+                    </div>
+                </div>
+            `).join('');
+            updateScenarioUI();
+        }
+
+        function updateScenarioUI() {
+            SCENARIOS.forEach(s => {
+                const card = document.getElementById(`card-${s.id}`);
+                const btn = document.getElementById(`btn-${s.id}`);
+                const timer = document.getElementById(`timer-${s.id}`);
+                
+                if (s.id === state.activeMode) {
+                    card.classList.add('active');
+                    card.classList.remove('dimmed');
+                    btn.innerHTML = 'ACTIVE ●';
+                    btn.className = 'scenario-btn text-xs font-semibold px-4 py-1.5 rounded text-white border-transparent btn-pulse';
+                    btn.style.backgroundColor = `rgba(${s.color}, 0.3)`;
+                    if (s.id !== 'normal') {
+                        timer.classList.remove('hidden');
+                        timer.textContent = `Auto-reset in ${state.countdown}s...`;
+                    } else {
+                        timer.classList.add('hidden');
+                    }
+                } else {
+                    card.classList.remove('active');
+                    if (state.activeMode !== 'normal') {
+                        card.classList.add('dimmed');
+                    } else {
+                        card.classList.remove('dimmed');
+                    }
+                    btn.innerHTML = 'ACTIVATE';
+                    btn.className = 'scenario-btn text-xs font-semibold px-4 py-1.5 rounded bg-white/10 hover:bg-white/20 text-white border border-white/10';
+                    btn.style.backgroundColor = '';
+                    timer.classList.add('hidden');
+                }
+            });
+
+            // Update Header Badge
+            const activeData = SCENARIOS.find(s => s.id === state.activeMode);
+            const badge = document.getElementById('modeBadge');
+            const badgeText = document.getElementById('modeBadgeText');
+            badgeText.textContent = activeData.name.toUpperCase();
+            badge.style.setProperty('--badge-rgb', activeData.color);
+            badge.style.backgroundColor = `rgba(${activeData.color}, 0.1)`;
+            badge.style.color = `rgb(${activeData.color})`;
+
+            // Update ECG
+            const ecgPath = document.getElementById('ecgPath');
+            if (state.activeMode === 'normal') {
+                ecgPath.classList.remove('ecg-alert');
+                ecgPath.classList.add('ecg-normal');
+                ecgPath.style.stroke = '';
+            } else {
+                ecgPath.classList.remove('ecg-normal');
+                ecgPath.classList.add('ecg-alert');
+                ecgPath.style.stroke = `rgb(${activeData.color})`;
+            }
+
+            // Update Active Metric Card
+            updateMetricDisplay('active', activeData.name);
+        }
+
+        // ACTIONS
+        async function activateScenario(id) {
+            if (state.activeMode === id) return;
+            
+            // Optimistic UI update
+            state.activeMode = id;
+            if (id !== 'normal') {
+                startCountdown();
+            } else {
+                stopCountdown();
+            }
+            updateScenarioUI();
+
+            try {
+                await fetch(`${API_BASE}/chaos/${id}`, { method: 'POST' });
+            } catch (err) {
+                console.error('Failed to set chaos mode:', err);
+            }
+        }
+
+        async function pollStatus() {
+            try {
+                const res = await fetch(`${API_BASE}/chaos/status`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.mode && data.mode !== state.activeMode) {
+                        state.activeMode = data.mode;
+                        if (data.mode !== 'normal' && state.countdown === 0) {
+                            startCountdown();
+                        } else if (data.mode === 'normal') {
+                            stopCountdown();
+                        }
+                        updateScenarioUI();
+                    }
+                }
+            } catch (err) {}
+        }
+
+        function startCountdown() {
+            stopCountdown();
+            state.countdown = 60;
+            state.countdownTimer = setInterval(() => {
+                state.countdown--;
+                if (state.countdown <= 0) {
+                    activateScenario('normal');
+                } else {
+                    updateScenarioUI();
+                }
+            }, 1000);
+        }
+
+        function stopCountdown() {
+            if (state.countdownTimer) clearInterval(state.countdownTimer);
+            state.countdown = 0;
+        }
+
+        // TRAFFIC GENERATOR
+        function pickRoute() {
+            const rand = Math.random();
+            let sum = 0;
+            for (const r of ROUTES) {
+                sum += r.weight;
+                if (rand <= sum) return r;
+            }
+            return ROUTES[0];
+        }
+
+        async function generateTraffic() {
+            const route = pickRoute();
+            const start = performance.now();
+            let status = 0;
+            
+            try {
+                const res = await fetch(`${API_BASE}${route.path}`, {
+                    method: route.method,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                status = res.status;
+            } catch (err) {
+                status = -1; // Offline or failed
+            }
+            
+            const latency = Math.round(performance.now() - start);
+            addRequestToFeed(route.method, route.path, status, latency);
+            updateMetrics(status, latency);
+        }
+
+        // REQUEST FEED & METRICS
+        function addRequestToFeed(method, path, status, latency) {
+            const feed = document.getElementById('requestFeed');
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                            now.getMinutes().toString().padStart(2, '0') + ':' + 
+                            now.getSeconds().toString().padStart(2, '0');
+            
+            let statusText = status;
+            let statusColor = 'text-gray-400';
+            let rowBorder = 'border-l-transparent';
+
+            if (status === -1) {
+                statusText = 'ERR';
+                statusColor = 'text-red-500';
+                rowBorder = 'border-l-red-500/50';
+            } else if (status >= 500) {
+                statusColor = 'text-red-500';
+                rowBorder = 'border-l-red-500/50';
+            } else if (status >= 400) {
+                statusColor = 'text-amber-500';
+            } else if (status >= 200 && status < 300) {
+                statusColor = 'text-green-500';
+            }
+
+            const methodBg = method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400';
+
+            const row = document.createElement('div');
+            row.className = `request-row flex items-center py-1.5 px-3 border-l-2 ${rowBorder} bg-white/5 rounded text-[13px] font-mono gap-3 mb-1 shrink-0`;
+            row.innerHTML = `
+                <span class="text-gray-500 w-16">${timeStr}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${methodBg} w-10 text-center">${method}</span>
+                <span class="text-gray-200 flex-1 truncate">${path}</span>
+                <span class="${statusColor} w-10 text-right">${statusText}</span>
+                <span class="text-gray-500 w-14 text-right">${latency}ms</span>
+            `;
+
+            feed.prepend(row);
+
+            while (feed.children.length > 15) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+
+        function updateMetrics(status, latency) {
+            state.totalRequests++;
+            state.recentRequests.push({ status, latency });
+            if (state.recentRequests.length > 50) state.recentRequests.shift();
+
+            updateMetricDisplay('total', state.totalRequests);
+
+            if (state.recentRequests.length > 0) {
+                const errors = state.recentRequests.filter(r => r.status >= 500 || r.status === -1).length;
+                const errRate = (errors / state.recentRequests.length * 100).toFixed(1);
+                updateMetricDisplay('error', `${errRate}%`);
+                
+                const cardErr = document.getElementById('val-error');
+                if (errRate > 10) {
+                    cardErr.className = 'text-2xl font-mono text-red-500';
+                } else if (errRate > 2) {
+                    cardErr.className = 'text-2xl font-mono text-amber-500';
+                } else {
+                    cardErr.className = 'text-2xl font-mono text-green-500';
+                }
+
+                const sumLat = state.recentRequests.reduce((acc, r) => acc + r.latency, 0);
+                const avgLat = Math.round(sumLat / state.recentRequests.length);
+                updateMetricDisplay('latency', `${avgLat}ms`);
+                
+                const cardLat = document.getElementById('val-latency');
+                if (avgLat > 1000) {
+                    cardLat.className = 'text-2xl font-mono text-red-500';
+                } else if (avgLat > 300) {
+                    cardLat.className = 'text-2xl font-mono text-amber-500';
+                } else {
+                    cardLat.className = 'text-2xl font-mono text-green-500';
+                }
+            }
+        }
+
+        function updateMetricDisplay(id, value) {
+            const el = document.getElementById(`val-${id}`);
+            if (el.textContent !== String(value)) {
+                el.textContent = value;
+                const card = document.getElementById(`metric-${id}`);
+                card.classList.remove('metric-flash');
+                void card.offsetWidth;
+                card.classList.add('metric-flash');
+            }
+        }
+
+        function updateUptime() {
+            const diff = Math.floor((Date.now() - state.startTime) / 1000);
+            const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+            const s = (diff % 60).toString().padStart(2, '0');
+            document.getElementById('uptimeCounter').textContent = `${h}:${m}:${s}`;
+        }
+
+        function toggleDemoPanel(e) {
+            const panel = document.getElementById('demoPanel');
+            const icon = document.getElementById('panelIcon');
+            panel.classList.toggle('expanded');
+            if (panel.classList.contains('expanded')) {
+                icon.textContent = '▼';
+            } else {
+                icon.textContent = '▲';
+            }
+        }
+    </script>
+</body>
+</html>
