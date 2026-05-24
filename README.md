@@ -126,5 +126,6 @@ This tells the Groq AI Engine to read the failing logs. In a few seconds, the AI
 
 **Vedant Dubey**  
 GitHub: [vedantdubey19](https://github.com/vedantdubey19)
+
 **Shubham Singh**  
 *Co-Author & Contributor*
