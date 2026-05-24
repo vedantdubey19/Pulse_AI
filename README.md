@@ -93,18 +93,32 @@ npm start
 
 ---
 
-## 🎮 Platform Demonstration Guide
+## 🎮 Beginner-Friendly Demo Guide
 
-To verify the platform's capabilities, execute the following sequence:
+Not sure how to test it out? Follow this simple step-by-step walkthrough to see Pulse AI in action!
 
-1. **Access the Control Plane:** Open the Vite localhost URL in a modern web browser to view the Pulse AI dashboard.
-2. **Initialize Traffic:** Navigate to the Demo App (`http://localhost:3001`) and select "Activate" on the standard traffic simulation. Observe the dashboard metrics and RPM charts actively updating via WebSockets.
-3. **Inject Anomalies:** In the Demo App, trigger a "Chaos" event (e.g., *Inject High Error Rate* or *Inject Latency Spike*).
-4. **Observe Autonomous Detection:**
-   - The Go backend's `IncidentDetector` will flag the anomaly and broadcast an event.
-   - An **AI Anomaly Card** will immediately surface on the dashboard feed.
-   - The **Topology Map** will visually degrade the affected service node.
-5. **Execute RCA:** Click **"Investigate"** on the generated anomaly card to request an AI analysis. The system will bundle the contextual telemetry, pass it through the LLM inference engine, and return actionable debugging recommendations.
+### Step 1: Open Your Windows
+You will need two browser windows open side-by-side:
+1. **The Pulse Dashboard:** Open `http://localhost:5174` (or whatever URL Vite gave you). This is your main control center where you monitor the system.
+2. **The Demo App:** Open `http://localhost:3001`. This acts as your "fake" application. It simulates a live website with a Payments service, an Orders service, and an Inventory service.
+
+### Step 2: Turn on Normal Traffic
+On the **Demo App** screen, find the "Standard Traffic Simulation" box and click **Activate**. 
+Now, look at your **Pulse Dashboard**. You should see the numbers coming alive! The charts will start moving, showing about ~30 requests per minute. This means your backend is successfully tracking healthy traffic. 
+
+### Step 3: Break Things on Purpose (Chaos!)
+Time to test the AI. Go back to the **Demo App** and find the **"Inject Chaos Scenarios"** section. 
+Click on a red button like **"Inject High Error Rate"** or **"Inject Latency Spike"**. 
+*What you are doing here is simulating a sudden database crash or network failure in your fake application.*
+
+### Step 4: Watch the System Catch the Error
+Without you needing to refresh the page, look at the **Pulse Dashboard**:
+- A red **AI Anomaly Card** will pop up on the screen, alerting you that something went wrong.
+- If you click over to the **Topology Map** tab, you will see the exact service (like `payments` or `inventory`) turn red and throb, showing you exactly where the system is failing in real-time.
+
+### Step 5: Ask the AI for Help
+On the Dashboard, click the **"Investigate"** button inside the red Anomaly Card. 
+This tells the Groq AI Engine to read the failing logs. In a few seconds, the AI will generate a **Root Cause Analysis (RCA)**. It will explain exactly *why* the failure happened in plain English, and provide a bulleted list of suggestions on how to fix it!
 
 ---
 
