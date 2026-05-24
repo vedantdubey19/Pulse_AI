@@ -1,38 +1,55 @@
-# 🚀 Pulse AI — API Failure Detection & Debugging Agent
-
-Pulse AI is an intelligent, real-time observability platform and AI agent designed to monitor microservices, detect silent API failures, group recurring incidents, and provide actionable LLM-powered Root Cause Analysis (RCA) to developers before users even notice an issue.
-
----
-
-## ✨ Core Features
-
-- **📡 High-Throughput Log Ingestion:** Continuously ingest telemetry (status codes, latencies, endpoints) from your microservices.
-- **🚨 Autonomous Anomaly Detection:** Sliding-window heuristics automatically flag latency spikes and error bursts without manual threshold tuning.
-- **🧠 AI Root Cause Analysis (RCA):** Integrates with Groq (Llama 3.1) to analyze surrounding contextual logs and generate human-readable explanations and debugging recommendations.
-- **🕸️ Dynamic Topology Mapping:** Real-time dependency graph mapping out service connections, highlighting degraded nodes based on live traffic.
-- **⚡ Real-time WebSockets:** Live dashboard updates, pulsing metric charts, and "Neural Engine" incident feeds pushed instantly to the UI.
+<div align="center">
+  <h1>🚀 Pulse AI</h1>
+  <p><b>Intelligent API Failure Detection & Root Cause Analysis Platform</b></p>
+  
+  [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go&logoColor=white)](#)
+  [![React Version](https://img.shields.io/badge/React-18+-61DAFB?logo=react&logoColor=black)](#)
+  [![MongoDB](https://img.shields.io/badge/MongoDB-Aggregations-47A248?logo=mongodb&logoColor=white)](#)
+  [![Groq](https://img.shields.io/badge/AI-Groq%20Llama%203-F55036?logo=meta)](#)
+</div>
 
 ---
 
-## 🏗 Architecture & Tech Stack
+## 📖 Overview
 
-This repository is a full monorepo containing all 3 pieces of the end-to-end system:
+**Pulse AI** is an enterprise-grade, real-time observability platform designed to monitor microservice architectures, detect silent API failures, and autonomously generate actionable debugging recommendations. 
 
-1. **Pulse Backend (Golang)**
-   - **Language:** Go
-   - **Database:** MongoDB (Aggregations, Timeseries)
-   - **AI:** Groq API (LLM inference)
-   - **Location:** `/Pulse-Backend/`
+Traditional monitoring tools require manual threshold tuning and leave developers sifting through thousands of logs during an outage. Pulse AI solves this by employing high-throughput telemetry ingestion, sliding-window heuristics for anomaly detection, and an integrated Large Language Model (LLM) to perform instantaneous Root Cause Analysis (RCA).
 
-2. **Pulse Dashboard (Frontend)**
-   - **Tech:** React, Vite, Vanilla CSS, Chart.js
-   - **Features:** Glassmorphism UI, WebSocket client, SVG Topology Engine
-   - **Location:** `/src/` & `/index.html`
+---
 
-3. **Chaos Demo App**
-   - **Tech:** Node.js, Express
-   - **Role:** Simulates a microservice architecture (Payments, Orders, Inventory) and fires simulated normal & "chaos" traffic at the Go backend.
-   - **Location:** `/Demo_app/`
+## ✨ Core Capabilities
+
+- **📡 High-Throughput Telemetry Ingestion:** Processes thousands of concurrent API logs (latency, status codes, methods) with sub-millisecond overhead.
+- **🚨 Autonomous Anomaly Detection:** Dynamically calculates traffic baselines using sliding-window aggregations to flag latency spikes and error bursts without manual configuration.
+- **🧠 LLM-Powered Root Cause Analysis:** Integrates with the Groq inference engine (Llama 3.1) to analyze localized contextual logs and generate human-readable causal explanations and remediation steps.
+- **🕸️ Dynamic Topology Engine:** Constructs a live, interactive dependency graph of all interacting microservices, highlighting degraded nodes in real-time.
+- **⚡ Reactive Dashboard:** Features a modern, glassmorphism-inspired React UI powered by WebSockets for instantaneous metrics, charts, and incident alerts.
+
+---
+
+## 🏗 System Architecture
+
+The repository is structured as a full-stack monorepo comprising three specialized environments:
+
+### 1. Pulse Backend (Golang)
+The core ingestion and analytics engine.
+- **Language:** Go
+- **Database:** MongoDB (Time-series aggregations, event deduplication)
+- **AI Integration:** Groq API
+- **Location:** `/Pulse-Backend/`
+
+### 2. Pulse Dashboard (Frontend)
+The real-time observability control plane.
+- **Technology:** React, Vite, Chart.js, Vanilla CSS
+- **Features:** WebSocket listener, SVG Topology Map, Neural Engine Incident Feed
+- **Location:** `/src/` & `/index.html`
+
+### 3. Chaos Demo App (Traffic Generator)
+A simulated microservice environment designed to test Pulse AI.
+- **Technology:** Node.js, Express
+- **Role:** Simulates services (Payments, Orders, Inventory) and exposes endpoints to inject controlled "Chaos" (latency spikes, HTTP 500 bursts).
+- **Location:** `/Demo_app/`
 
 ---
 
@@ -40,57 +57,61 @@ This repository is a full monorepo containing all 3 pieces of the end-to-end sys
 
 ### Prerequisites
 - Node.js (v18+)
-- Go (1.21+)
-- MongoDB (running locally on port 27017 or remote cluster)
-- Groq API Key (Optional, for AI RCA)
+- Go (v1.21+)
+- MongoDB (Running locally on port 27017 or a remote cluster)
+- Groq API Key (For AI inference capabilities)
 
-### 1. Start the Go Backend
+### Step 1: Initialize the Analytics Backend
 ```bash
 cd Pulse-Backend
 go mod download
 
-# Optional: Set Groq API key for AI analysis
+# Set the Groq API key for Neural Engine RCA
 export GROQ_API_KEY="your-groq-key"
 
-# Run the server
+# Boot the ingestion server
 go run cmd/server/main.go
 ```
-*Runs on `http://localhost:8080`*
+*Server initialized on `http://localhost:8080`*
 
-### 2. Start the Frontend Dashboard
-Open a new terminal window at the root of the project:
+### Step 2: Initialize the Observability Dashboard
+Open a new terminal session at the root of the project:
 ```bash
 npm install
 npm run dev
 ```
-*Runs on `http://localhost:5174` (or port specified by Vite)*
+*Dashboard initialized on `http://localhost:5174`*
 
-### 3. Start the Demo App (Traffic Generator)
-Open a third terminal window:
+### Step 3: Initialize the Microservice Traffic Simulator
+Open a third terminal session:
 ```bash
 cd Demo_app
 npm install
 npm start
 ```
-*Runs on `http://localhost:3001`*
+*Simulator initialized on `http://localhost:3001`*
 
 ---
 
-## 🎮 How to Demo the Platform
+## 🎮 Platform Demonstration Guide
 
-1. **Open the Dashboard:** Navigate to the Vite localhost URL. You will see a sleek, dark-themed UI.
-2. **Open the Demo App:** Navigate to `http://localhost:3001`.
-3. **Start Traffic:** Click "Activate" on the normal simulation in the Demo App. You will instantly see the RPM, Requests, and Charts light up on the Dashboard.
-4. **Trigger Chaos:** Click "Inject High Error Rate" or "Inject Latency Spike".
-5. **Watch the AI Agent Work:**
-   - The Go backend will instantly detect the anomaly and emit a WebSocket event.
-   - The React dashboard will pop an **AI Anomaly Card** and log a **Critical Incident** in the feed.
-   - The **Topology Map** will turn the failing service node red.
-6. **Investigate:** Click "Investigate" on the anomaly card. The LLM will fetch the contextual logs and generate a structured **Root Cause Analysis** with exact steps on how to fix it!
+To verify the platform's capabilities, execute the following sequence:
+
+1. **Access the Control Plane:** Open the Vite localhost URL in a modern web browser to view the Pulse AI dashboard.
+2. **Initialize Traffic:** Navigate to the Demo App (`http://localhost:3001`) and select "Activate" on the standard traffic simulation. Observe the dashboard metrics and RPM charts actively updating via WebSockets.
+3. **Inject Anomalies:** In the Demo App, trigger a "Chaos" event (e.g., *Inject High Error Rate* or *Inject Latency Spike*).
+4. **Observe Autonomous Detection:**
+   - The Go backend's `IncidentDetector` will flag the anomaly and broadcast an event.
+   - An **AI Anomaly Card** will immediately surface on the dashboard feed.
+   - The **Topology Map** will visually degrade the affected service node.
+5. **Execute RCA:** Click **"Investigate"** on the generated anomaly card to request an AI analysis. The system will bundle the contextual telemetry, pass it through the LLM inference engine, and return actionable debugging recommendations.
 
 ---
 
-## 👨‍💻 Author
+## 👨‍💻 Authors
 
-**Vedant Dubey**
+**Vedant Dubey**  
 GitHub: [vedantdubey19](https://github.com/vedantdubey19)
+
+**Shubham Singh**  
+*Co-Author & Contributor*
