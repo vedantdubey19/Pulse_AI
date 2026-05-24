@@ -1,8 +1,7 @@
 /**
  * Service Topology / Dependency Map view (SVG-based)
  */
-import { TOPOLOGY_NODES, TOPOLOGY_EDGES, SERVICE_DETAILS } from '../services/mockData.js';
-import { fetchTopology } from '../services/pulseBackend.js';
+import { fetchTopology } from '../services/apiClient.js';
 
 const STATUS_COLORS = {
   healthy: '#22c55e',
@@ -19,8 +18,10 @@ const TYPE_ICONS = {
 };
 
 let activePopover = null;
-let refreshTimer = null;
-let liveTopology = null;
+let currentNodes = [];
+let currentEdges = [];
+let currentDetails = {};
+let topoInterval = null;
 
 export default {
   mount(container) {
@@ -40,9 +41,42 @@ export default {
     `;
 
     container.appendChild(view);
-    loadTopology();
 
-    refreshTimer = setInterval(loadTopology, 30000);
+    const fetchAndRender = async () => {
+      try {
+        const topo = await fetchTopology();
+        if (topo && topo.services) {
+          const cx = 410, cy = 210, r = 130;
+          const len = topo.services.length;
+          currentNodes = topo.services.map((n, i) => {
+            const angle = (i / len) * 2 * Math.PI - Math.PI / 2;
+            return {
+              id: n.id,
+              label: n.name,
+              type: n.meta?.type || 'service',
+              status: n.status,
+              x: cx + r * Math.cos(angle),
+              y: cy + r * Math.sin(angle),
+              details: {
+                latency: `${n.meta?.avgLatencyMs || 0}ms`,
+                errorRate: n.meta?.errorCount ? `${(n.meta.errorCount / Math.max(1, n.meta.totalRequests) * 100).toFixed(1)}%` : '0%',
+                requests: `${n.meta?.totalRequests || 0}/min`,
+                lastIncident: n.status === 'critical' ? 'Ongoing' : 'None'
+              }
+            };
+          });
+          currentEdges = topo.edges;
+          currentDetails = {};
+          currentNodes.forEach(n => currentDetails[n.id] = n.details);
+          renderTopology();
+        }
+      } catch (e) {
+        console.error('Topology error', e);
+      }
+    };
+
+    fetchAndRender();
+    topoInterval = setInterval(fetchAndRender, 3000);
 
     // Close popover on click outside
     const closeHandler = (e) => {
@@ -54,43 +88,22 @@ export default {
 
     return () => {
       document.removeEventListener('click', closeHandler);
-      if (refreshTimer) {
-        clearInterval(refreshTimer);
-        refreshTimer = null;
-      }
+      clearInterval(topoInterval);
       removePopover();
     };
   }
 };
 
-async function loadTopology() {
-  try {
-    liveTopology = await fetchTopology();
-  } catch (err) {
-    liveTopology = null;
-  }
-
-  renderTopology();
-}
-
 function renderTopology() {
   const svg = document.getElementById('topology-svg');
   if (!svg) return;
 
-  const nodes = Array.isArray(liveTopology?.services) && liveTopology.services.length
-    ? liveTopology.services.map((service, index) => normalizeServiceNode(service, index))
-    : TOPOLOGY_NODES;
-
-  const edges = Array.isArray(liveTopology?.edges) && liveTopology.edges.length
-    ? liveTopology.edges.map((edge) => normalizeServiceEdge(edge, nodes))
-    : TOPOLOGY_EDGES;
-
   let svgContent = '';
 
   // Draw edges
-  edges.forEach((edge, i) => {
-    const from = nodes.find(n => n.id === edge.from);
-    const to = nodes.find(n => n.id === edge.to);
+  currentEdges.forEach((edge, i) => {
+    const from = currentNodes.find(n => n.id === edge.from);
+    const to = currentNodes.find(n => n.id === edge.to);
     if (!from || !to) return;
 
     const toStatus = STATUS_COLORS[to.status] || '#64748b';
@@ -106,7 +119,7 @@ function renderTopology() {
   });
 
   // Draw nodes
-  nodes.forEach(node => {
+  currentNodes.forEach(node => {
     const color = STATUS_COLORS[node.status] || '#64748b';
     const r = node.type === 'gateway' ? 30 : 24;
     const isActive = node.status === 'critical' || node.status === 'degraded';
@@ -143,11 +156,8 @@ function renderTopology() {
 function showPopover(nodeId) {
   removePopover();
 
-  const nodes = Array.isArray(liveTopology?.services) && liveTopology.services.length
-    ? liveTopology.services.map((service, index) => normalizeServiceNode(service, index))
-    : TOPOLOGY_NODES;
-  const node = nodes.find(n => n.id === nodeId);
-  const details = getServiceDetails(nodeId, node);
+  const node = currentNodes.find(n => n.id === nodeId);
+  const details = currentDetails[nodeId];
   if (!node || !details) return;
 
   const containerEl = document.getElementById('topology-container');
@@ -198,57 +208,6 @@ function showPopover(nodeId) {
 
   containerEl.appendChild(popover);
   activePopover = popover;
-}
-
-function normalizeServiceNode(service, index) {
-  const status = normalizeStatus(service.status);
-  const baseNodes = TOPOLOGY_NODES;
-  const fallback = baseNodes[index] || baseNodes[0];
-  return {
-    id: service.id || `service-${index}`,
-    label: service.name || service.id || `Service ${index + 1}`,
-    type: service.type || fallback.type || 'service',
-    x: service.x ?? fallback.x,
-    y: service.y ?? fallback.y,
-    status
-  };
-}
-
-function normalizeServiceEdge(edge, nodes) {
-  const fromExists = nodes.some(node => node.id === edge.from);
-  const toExists = nodes.some(node => node.id === edge.to);
-  if (!fromExists || !toExists) {
-    return edge;
-  }
-  return edge;
-}
-
-function normalizeStatus(status) {
-  const normalized = String(status || '').toLowerCase();
-  if (['healthy', 'degraded', 'critical', 'unknown'].includes(normalized)) return normalized;
-  if (normalized === 'warning') return 'degraded';
-  return 'unknown';
-}
-
-function getServiceDetails(nodeId, node) {
-  const liveService = liveTopology?.services?.find((service) => service.id === nodeId);
-  const meta = liveService?.meta || {};
-
-  if (liveService) {
-    return {
-      latency: meta.avgLatencyMs != null ? `${Math.round(meta.avgLatencyMs)}ms` : SERVICE_DETAILS[nodeId]?.latency || 'N/A',
-      errorRate: meta.errorRate != null ? `${Number(meta.errorRate).toFixed(1)}%` : SERVICE_DETAILS[nodeId]?.errorRate || 'N/A',
-      requests: meta.totalRequests != null ? `${Math.round(meta.totalRequests).toLocaleString()}/min` : SERVICE_DETAILS[nodeId]?.requests || 'N/A',
-      lastIncident: liveService.resolved ? 'Resolved' : liveService.lastIncident || SERVICE_DETAILS[nodeId]?.lastIncident || 'None'
-    };
-  }
-
-  return SERVICE_DETAILS[nodeId] || {
-    latency: node?.status === 'critical' ? 'N/A' : 'N/A',
-    errorRate: 'N/A',
-    requests: 'N/A',
-    lastIncident: 'None'
-  };
 }
 
 function removePopover() {

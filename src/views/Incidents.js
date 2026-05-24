@@ -3,7 +3,7 @@
  */
 import { getState, subscribe } from '../state.js';
 import { navigate } from '../router.js';
-import { resolveIncident } from '../services/pulseBackend.js';
+import { requestRCA } from '../services/apiClient.js';
 
 let activeFilter = 'all';
 
@@ -76,10 +76,6 @@ function renderIncidents() {
       actionBtn = `<span class="badge" style="border:1px solid var(--ai-purple);color:var(--ai-purple)"><i class="ti ti-brain" style="margin-right:4px"></i>RCA Ready</span>`;
     }
 
-    if (inc.severity !== 'resolved') {
-      actionBtn += ` <button class="btn-rca" data-action="resolve" style="margin-left:8px;">Resolve</button>`;
-    }
-
     const causeParts = inc.cause.split('—').map(s => s.trim());
     const mainCause = causeParts[0];
     const detailCause = causeParts[1] || '';
@@ -133,6 +129,15 @@ function renderIncidents() {
         btn.innerHTML = `<i class="ti ti-loader" style="animation: spin 1s linear infinite;"></i> <span class="font-mono">${status}</span>`;
       }
       
+      let rcaData;
+      try {
+        rcaData = await requestRCA(inc.id);
+      } catch (e) {
+        btn.innerHTML = '<i class="ti ti-alert-triangle"></i> <span class="font-mono">RCA FAILED</span>';
+        btn.style.backgroundColor = 'var(--alert-red)';
+        return;
+      }
+      
       // Phase 3
       btn.innerHTML = '<i class="ti ti-check"></i> <span class="font-mono">RCA COMPLETE</span>';
       btn.style.backgroundColor = 'var(--success-green)';
@@ -151,37 +156,10 @@ function renderIncidents() {
       rcaPanel.style.animation = 'slideInRight var(--duration-normal) var(--ease-out) forwards';
       rcaPanel.innerHTML = `
         <div style="margin-bottom: 8px; color: var(--text-primary);">Root Cause Identified:</div>
-        <div style="margin-bottom: 12px; font-size: 11px;">Anomalous spike in database connections leading to pool exhaustion.</div>
+        <div style="margin-bottom: 12px; font-size: 11px;">${rcaData?.rca?.summary || 'Unknown error occurred.'}</div>
         <button class="btn-primary" style="font-size: 12px; width: 100%; justify-content: center;" onclick="window.location.hash='rca'">View Full RCA</button>
       `;
       body.appendChild(rcaPanel);
     });
   });
-
-  list.querySelectorAll('[data-action="resolve"]').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      const card = e.target.closest('.incident-card');
-      const endpointLabel = card?.querySelector('.font-mono')?.textContent || 'incident';
-      const incident = findIncidentByEndpoint(endpointLabel);
-      if (!incident) return;
-
-      btn.disabled = true;
-      btn.textContent = 'Resolving...';
-
-      try {
-        await resolveIncident(incident.id);
-        incident.severity = 'resolved';
-        incident.duration = 'Resolved';
-        renderIncidents();
-      } catch (err) {
-        btn.disabled = false;
-        btn.textContent = 'Resolve';
-      }
-    });
-  });
-}
-
-function findIncidentByEndpoint(endpointLabel) {
-  const allIncidents = getState('incidents') || [];
-  return allIncidents.find((incident) => incident.endpoint === endpointLabel || incident.endpoint === endpointLabel.trim());
 }

@@ -1,13 +1,12 @@
 /**
  * Dashboard view
  */
-import { DEMO_ENDPOINTS } from '../services/demoConfig.js';
 import { getState, subscribe } from '../state.js';
 import { createLineChart, lineDataset, CHART_COLORS } from '../utils/charts.js';
-import { registerCharts } from '../services/simulation.js';
-import { startAnomalyDetection } from '../services/anomalyEngine.js';
-import { createAnomalyCard } from '../components/AnomalyCard.js';
+import { animateValue } from '../utils/animate.js';
 import { navigate } from '../router.js';
+import { fetchMetrics } from '../services/apiClient.js';
+import { createAnomalyCard } from '../components/AnomalyCard.js';
 
 let charts = {};
 let stopAnomalies = null;
@@ -37,16 +36,6 @@ export default {
               <div class="metric-label">P95 Latency</div>
               <div class="metric-value text-amber" id="metric-latency">0ms</div>
               <div class="metric-trend text-amber">Performance degrading</div>
-            </div>
-            <div class="metric-card status-blue animate-in stagger-4">
-              <div class="metric-label">Requests / Hour</div>
-              <div class="metric-value text-blue" id="metric-requests-hour">0</div>
-              <div class="metric-trend text-blue"><i class="ti ti-activity"></i> From backend aggregate</div>
-            </div>
-            <div class="metric-card status-purple animate-in stagger-5">
-              <div class="metric-label">Errors / Hour</div>
-              <div class="metric-value text-purple" id="metric-errors-hour">0</div>
-              <div class="metric-trend text-purple"><i class="ti ti-alert-octagon"></i> Hourly failure count</div>
             </div>
           </div>
 
@@ -118,24 +107,36 @@ export default {
     renderEndpointsTable();
     renderIncidentsFeed();
     initDashboardCharts();
-    startAnomalyMonitor();
-
-    // Subscribe to incident changes
-    const unsubIncidents = subscribe('incidents', () => {
-      renderIncidentsFeed();
-      renderEndpointsTable();
+    
+    // Subscribe to live metrics
+    const unsubMetrics = subscribe('liveMetrics', (payload) => {
+      if (payload) {
+        updateDashboardMetrics(payload);
+        updateDashboardCharts(payload);
+      }
     });
 
-    const unsubMetrics = subscribe('metrics', (metrics) => {
-      renderEndpointsTable();
-      renderMetricCards(metrics);
-      syncMetricCharts(metrics);
+    // Poll metrics every 2 seconds since backend doesn't broadcast them
+    let metricsInterval = setInterval(async () => {
+      const payload = await fetchMetrics();
+      if (payload) {
+        updateDashboardMetrics(payload);
+        updateDashboardCharts(payload);
+      }
+    }, 2000);
+
+    // Subscribe to incident changes
+    const unsub = subscribe('incidents', () => {
+      renderIncidentsFeed();
+      renderAnomalies();
+      const incCount = document.getElementById('metric-incidents');
+      if (incCount) incCount.innerText = (getState('incidents') || []).filter(i => !i.resolved).length;
     });
 
     return () => {
-      unsubIncidents();
+      clearInterval(metricsInterval);
+      unsub();
       unsubMetrics();
-      if (stopAnomalies) { stopAnomalies(); stopAnomalies = null; }
       Object.values(charts).forEach(c => c.destroy?.());
       charts = {};
     };
@@ -145,37 +146,7 @@ export default {
 function renderEndpointsTable() {
   const tbody = document.getElementById('endpoints-tbody');
   if (!tbody) return;
-
-  const metrics = getState('metrics') || {};
-  const baseLatency = Math.round(metrics.avgLatencyMs ?? metrics.avgLatency ?? 0);
-  const baseError = Number(metrics.errorRate || 0);
-
-  tbody.innerHTML = DEMO_ENDPOINTS.map(ep => {
-    const jitter = Math.round((Math.random() - 0.5) * 120);
-    const latency = Math.max(0, baseLatency + jitter);
-    const error = Math.max(0, baseError + (Math.random() - 0.5) * 2);
-    const status = error > 10 || latency > 1200 ? 'DEGRADED' : error > 2 || latency > 600 ? 'SLOW' : 'HEALTHY';
-    const methodClass = `method-${ep.method.toLowerCase()}`;
-    let badge = '';
-    if (status === 'HEALTHY') badge = '<span class="badge bg-green">Healthy</span>';
-    else if (status === 'SLOW') badge = '<span class="badge bg-amber">SLOW</span>';
-    else badge = '<span class="badge bg-red">DEGRADED</span>';
-
-    return `
-      <tr>
-        <td style="color:var(--text-primary)">${ep.path}</td>
-        <td class="${methodClass}">${ep.method}</td>
-        <td style="color:${latency > 1000 ? 'var(--warning-amber)' : 'inherit'}">${latency}ms</td>
-        <td style="color:${error > 5 ? 'var(--alert-red)' : 'inherit'}">${error.toFixed(1)}%</td>
-        <td>${badge}</td>
-        <td style="color:var(--text-secondary)">Just now</td>
-      </tr>
-    `;
-  }).join('');
-
-  tbody.querySelectorAll('tr').forEach(tr => {
-    tr.addEventListener('click', () => navigate('incidents'));
-  });
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary)">Awaiting endpoint telemetry...</td></tr>';
 }
 
 function renderIncidentsFeed() {
@@ -185,7 +156,9 @@ function renderIncidentsFeed() {
   const allIncidents = getState('incidents') || [];
 
   feed.innerHTML = allIncidents.slice(0, 5).map((inc, i) => {
+    const severityLower = (inc.severity || 'low').toLowerCase();
     const icons = {
+      critical: '<i class="ti ti-alert-triangle text-red"></i>',
       high: '<i class="ti ti-alert-triangle text-red"></i>',
       medium: '<i class="ti ti-alert-circle text-amber"></i>',
       low: '<i class="ti ti-info-circle text-blue"></i>',
@@ -193,103 +166,84 @@ function renderIncidentsFeed() {
     };
 
     const rcaBadge = inc.rcaReady ? '<span class="badge bg-purple" style="font-size:8px;">RCA</span>' : '';
+    const timeStr = inc.startTime ? new Date(inc.startTime).toLocaleTimeString() : 'Just now';
+    const isResolved = inc.resolved;
 
     return `
       <div class="incident-row ${i === 0 && getState('testRunning') ? 'new' : ''}">
-        ${icons[inc.severity] || icons.low}
-        <div class="incident-endpoint">${inc.endpoint} ${rcaBadge}</div>
-        <div class="incident-cause" style="text-decoration:${inc.severity === 'resolved' ? 'line-through' : 'none'}">${inc.cause}</div>
-        <div class="incident-time">${inc.time}</div>
+        ${icons[isResolved ? 'resolved' : severityLower] || icons.low}
+        <div class="incident-endpoint">${inc.service} ${rcaBadge}</div>
+        <div class="incident-cause" style="text-decoration:${isResolved ? 'line-through' : 'none'}">${inc.description || inc.cause}</div>
+        <div class="incident-time">${timeStr}</div>
       </div>
     `;
   }).join('');
+}
+
+function renderAnomalies() {
+  const container = document.getElementById('anomaly-section');
+  if (!container) return;
+  const active = (getState('incidents') || []).filter(i => !i.resolved);
+  if (active.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" id="anomaly-empty" style="padding:24px;">
+        <i class="ti ti-radar-2"></i>
+        <p>Analyzing network topology in real-time...</p>
+      </div>`;
+  } else {
+    container.innerHTML = '';
+    active.slice(0, 2).forEach(inc => {
+      const card = createAnomalyCard({
+        severity: inc.severity === 'Critical' ? 'high' : 'medium',
+        score: inc.severity === 'Critical' ? '98%' : '75%',
+        title: `Anomaly in ${inc.service}`,
+        description: inc.description,
+        endpoint: inc.service,
+        deviation: inc.cause,
+        timestamp: new Date().toLocaleTimeString(),
+        sparkData: inc.severity === 'Critical' ? [10, 20, 50, 90, 100] : [10, 20, 15, 40, 50]
+      });
+      container.appendChild(card);
+    });
+  }
 }
 
 function initDashboardCharts() {
   // Latency chart
   const latCanvas = document.getElementById('chart-latency');
   if (latCanvas) {
-    let latData = Array.from({ length: 30 }, () => 40 + Math.random() * 20);
-    for (let i = 15; i < 25; i++) latData[i] = 800 + Math.random() * 400;
-
     charts.latency = createLineChart(latCanvas, {
       labels: Array(30).fill(''),
-      datasets: [lineDataset({ data: latData, color: CHART_COLORS.amber })]
+      datasets: [lineDataset({ data: Array(30).fill(0), color: CHART_COLORS.amber })]
     });
   }
 
   // Error chart
   const errCanvas = document.getElementById('chart-error');
   if (errCanvas) {
-    let errData = Array.from({ length: 30 }, () => Math.random() * 2);
-    for (let i = 18; i < 28; i++) errData[i] = 10 + Math.random() * 25;
-
     charts.error = createLineChart(errCanvas, {
       labels: Array(30).fill(''),
-      datasets: [lineDataset({ data: errData, color: CHART_COLORS.red })]
+      datasets: [lineDataset({ data: Array(30).fill(0), color: CHART_COLORS.red })]
     });
   }
-
-  registerCharts(charts);
 }
 
-function renderMetricCards(metrics = {}) {
-  const p95 = Number(metrics.p95LatencyMs ?? metrics.p95 ?? metrics.avgLatencyMs ?? metrics.avgLatency ?? 0);
-  const requestsLastHour = Number(metrics.requestsLastHour ?? 0);
-  const errorsLastHour = Number(metrics.errorsLastHour ?? 0);
-
-  const p95El = document.getElementById('metric-latency');
-  const requestsEl = document.getElementById('metric-requests-hour');
-  const errorsEl = document.getElementById('metric-errors-hour');
-
-  if (p95El) p95El.innerText = `${Math.round(p95)}ms`;
-  if (requestsEl) requestsEl.innerText = requestsLastHour.toLocaleString();
-  if (errorsEl) errorsEl.innerText = errorsLastHour.toLocaleString();
+function updateDashboardMetrics(payload) {
+  const errEl = document.getElementById('metric-error');
+  const latEl = document.getElementById('metric-latency');
+  
+  if (errEl) errEl.innerText = (payload.errorRate || 0).toFixed(1) + '%';
+  if (latEl) latEl.innerText = (payload.avgLatencyMs || 0).toFixed(0) + 'ms';
 }
 
-function syncMetricCharts(metrics = {}) {
-  const latencySeries = Array.isArray(metrics.latencySeries) ? metrics.latencySeries : [];
-  const errorSeries = Array.isArray(metrics.errorSeries) ? metrics.errorSeries : [];
-
-  if (charts.latency) {
-    if (latencySeries.length > 0) {
-      charts.latency.data.labels = latencySeries.map((point) => formatSeriesLabel(point.t));
-      charts.latency.data.datasets[0].data = latencySeries.map((point) => Number(point.value || 0));
-      charts.latency.update('none');
-    }
+function updateDashboardCharts(payload) {
+  // Assuming payload has latencySeries and errorSeries arrays of last 30 values
+  if (charts.latency && payload.latencySeries) {
+    charts.latency.data.datasets[0].data = payload.latencySeries.map(s => s.value);
+    charts.latency.update('none');
   }
-
-  if (charts.error) {
-    if (errorSeries.length > 0) {
-      charts.error.data.labels = errorSeries.map((point) => formatSeriesLabel(point.t));
-      charts.error.data.datasets[0].data = errorSeries.map((point) => Number(point.value || 0));
-      charts.error.update('none');
-    }
+  if (charts.error && payload.errorSeries) {
+    charts.error.data.datasets[0].data = payload.errorSeries.map(s => s.value);
+    charts.error.update('none');
   }
-}
-
-function formatSeriesLabel(timestamp) {
-  const value = Number(timestamp || 0);
-  if (!Number.isFinite(value) || value <= 0) return '';
-  const date = new Date(value);
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
-
-function startAnomalyMonitor() {
-  const section = document.getElementById('anomaly-section');
-  if (!section) return;
-
-  stopAnomalies = startAnomalyDetection((anomaly) => {
-    const empty = document.getElementById('anomaly-empty');
-    if (empty) empty.remove();
-
-    const card = createAnomalyCard(anomaly);
-    section.prepend(card);
-
-    // Keep max 5 anomaly cards
-    const cards = section.querySelectorAll('.anomaly-card');
-    if (cards.length > 5) {
-      cards[cards.length - 1].remove();
-    }
-  });
 }

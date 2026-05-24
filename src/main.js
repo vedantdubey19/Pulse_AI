@@ -1,11 +1,10 @@
 /**
  * Pulse AI — Main Entry Point
  */
-import './styles/index.css';
-
 import { registerRoute, initRouter } from './router.js';
 import { setState, getState } from './state.js';
-import { startSimulation } from './services/simulation.js';
+import { fetchIncidents } from './services/apiClient.js';
+import { connectWebSocket } from './services/websocketClient.js';
 import { renderSidebar } from './components/Sidebar.js';
 import { renderTopbar } from './components/Topbar.js';
 import { initChatPanel } from './components/ChatPanel.js';
@@ -40,8 +39,11 @@ function init() {
   contentArea.id = 'content-area';
   main.appendChild(contentArea);
 
-  // Initialize state
-  setState('incidents', []);
+  // Initialize state from real backend
+  fetchIncidents().then(incidents => {
+      setState('incidents', incidents);
+      setState('incidentsCount', incidents.length);
+  });
 
   // Register routes
   registerRoute('dashboard', Dashboard);
@@ -58,8 +60,8 @@ function init() {
   initChatPanel();
   initCommandPalette();
 
-  // Start live simulation
-  startSimulation();
+  // Start real WebSocket connection
+  connectWebSocket();
 
   // Initialize WebMCP Agentic Tools
   initAgenticTools();
