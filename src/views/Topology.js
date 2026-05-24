@@ -2,6 +2,7 @@
  * Service Topology / Dependency Map view (SVG-based)
  */
 import { TOPOLOGY_NODES, TOPOLOGY_EDGES, SERVICE_DETAILS } from '../services/mockData.js';
+import { fetchTopology } from '../services/pulseBackend.js';
 
 const STATUS_COLORS = {
   healthy: '#22c55e',
@@ -18,6 +19,8 @@ const TYPE_ICONS = {
 };
 
 let activePopover = null;
+let refreshTimer = null;
+let liveTopology = null;
 
 export default {
   mount(container) {
@@ -37,7 +40,9 @@ export default {
     `;
 
     container.appendChild(view);
-    renderTopology();
+    loadTopology();
+
+    refreshTimer = setInterval(loadTopology, 30000);
 
     // Close popover on click outside
     const closeHandler = (e) => {
@@ -49,21 +54,43 @@ export default {
 
     return () => {
       document.removeEventListener('click', closeHandler);
+      if (refreshTimer) {
+        clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
       removePopover();
     };
   }
 };
 
+async function loadTopology() {
+  try {
+    liveTopology = await fetchTopology();
+  } catch (err) {
+    liveTopology = null;
+  }
+
+  renderTopology();
+}
+
 function renderTopology() {
   const svg = document.getElementById('topology-svg');
   if (!svg) return;
 
+  const nodes = Array.isArray(liveTopology?.services) && liveTopology.services.length
+    ? liveTopology.services.map((service, index) => normalizeServiceNode(service, index))
+    : TOPOLOGY_NODES;
+
+  const edges = Array.isArray(liveTopology?.edges) && liveTopology.edges.length
+    ? liveTopology.edges.map((edge) => normalizeServiceEdge(edge, nodes))
+    : TOPOLOGY_EDGES;
+
   let svgContent = '';
 
   // Draw edges
-  TOPOLOGY_EDGES.forEach((edge, i) => {
-    const from = TOPOLOGY_NODES.find(n => n.id === edge.from);
-    const to = TOPOLOGY_NODES.find(n => n.id === edge.to);
+  edges.forEach((edge, i) => {
+    const from = nodes.find(n => n.id === edge.from);
+    const to = nodes.find(n => n.id === edge.to);
     if (!from || !to) return;
 
     const toStatus = STATUS_COLORS[to.status] || '#64748b';
@@ -79,7 +106,7 @@ function renderTopology() {
   });
 
   // Draw nodes
-  TOPOLOGY_NODES.forEach(node => {
+  nodes.forEach(node => {
     const color = STATUS_COLORS[node.status] || '#64748b';
     const r = node.type === 'gateway' ? 30 : 24;
     const isActive = node.status === 'critical' || node.status === 'degraded';
@@ -116,8 +143,11 @@ function renderTopology() {
 function showPopover(nodeId) {
   removePopover();
 
-  const node = TOPOLOGY_NODES.find(n => n.id === nodeId);
-  const details = SERVICE_DETAILS[nodeId];
+  const nodes = Array.isArray(liveTopology?.services) && liveTopology.services.length
+    ? liveTopology.services.map((service, index) => normalizeServiceNode(service, index))
+    : TOPOLOGY_NODES;
+  const node = nodes.find(n => n.id === nodeId);
+  const details = getServiceDetails(nodeId, node);
   if (!node || !details) return;
 
   const containerEl = document.getElementById('topology-container');
@@ -168,6 +198,57 @@ function showPopover(nodeId) {
 
   containerEl.appendChild(popover);
   activePopover = popover;
+}
+
+function normalizeServiceNode(service, index) {
+  const status = normalizeStatus(service.status);
+  const baseNodes = TOPOLOGY_NODES;
+  const fallback = baseNodes[index] || baseNodes[0];
+  return {
+    id: service.id || `service-${index}`,
+    label: service.name || service.id || `Service ${index + 1}`,
+    type: service.type || fallback.type || 'service',
+    x: service.x ?? fallback.x,
+    y: service.y ?? fallback.y,
+    status
+  };
+}
+
+function normalizeServiceEdge(edge, nodes) {
+  const fromExists = nodes.some(node => node.id === edge.from);
+  const toExists = nodes.some(node => node.id === edge.to);
+  if (!fromExists || !toExists) {
+    return edge;
+  }
+  return edge;
+}
+
+function normalizeStatus(status) {
+  const normalized = String(status || '').toLowerCase();
+  if (['healthy', 'degraded', 'critical', 'unknown'].includes(normalized)) return normalized;
+  if (normalized === 'warning') return 'degraded';
+  return 'unknown';
+}
+
+function getServiceDetails(nodeId, node) {
+  const liveService = liveTopology?.services?.find((service) => service.id === nodeId);
+  const meta = liveService?.meta || {};
+
+  if (liveService) {
+    return {
+      latency: meta.avgLatencyMs != null ? `${Math.round(meta.avgLatencyMs)}ms` : SERVICE_DETAILS[nodeId]?.latency || 'N/A',
+      errorRate: meta.errorRate != null ? `${Number(meta.errorRate).toFixed(1)}%` : SERVICE_DETAILS[nodeId]?.errorRate || 'N/A',
+      requests: meta.totalRequests != null ? `${Math.round(meta.totalRequests).toLocaleString()}/min` : SERVICE_DETAILS[nodeId]?.requests || 'N/A',
+      lastIncident: liveService.resolved ? 'Resolved' : liveService.lastIncident || SERVICE_DETAILS[nodeId]?.lastIncident || 'None'
+    };
+  }
+
+  return SERVICE_DETAILS[nodeId] || {
+    latency: node?.status === 'critical' ? 'N/A' : 'N/A',
+    errorRate: 'N/A',
+    requests: 'N/A',
+    lastIncident: 'None'
+  };
 }
 
 function removePopover() {

@@ -3,7 +3,7 @@
  */
 import { loadSettings, saveSetting, saveAllSettings } from '../utils/storage.js';
 import { showToast } from '../components/Toast.js';
-import { ENDPOINTS } from '../services/mockData.js';
+import { DEMO_ENDPOINTS } from '../services/demoConfig.js';
 
 export default {
   mount(container) {
@@ -101,7 +101,7 @@ export default {
       <div class="settings-section" style="margin-top:20px;">
         <div class="settings-section-title"><i class="ti ti-server"></i> Monitored Endpoints</div>
         <div id="endpoint-list">
-          ${ENDPOINTS.map(ep => `
+          ${DEMO_ENDPOINTS.map(ep => `
             <div class="endpoint-list-item">
               <div>
                 <span class="endpoint-name">${ep.path}</span>

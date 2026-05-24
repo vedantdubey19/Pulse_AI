@@ -5,7 +5,6 @@ import './styles/index.css';
 
 import { registerRoute, initRouter } from './router.js';
 import { setState, getState } from './state.js';
-import { INCIDENTS } from './services/mockData.js';
 import { startSimulation } from './services/simulation.js';
 import { renderSidebar } from './components/Sidebar.js';
 import { renderTopbar } from './components/Topbar.js';
@@ -42,7 +41,7 @@ function init() {
   main.appendChild(contentArea);
 
   // Initialize state
-  setState('incidents', [...INCIDENTS]);
+  setState('incidents', []);
 
   // Register routes
   registerRoute('dashboard', Dashboard);

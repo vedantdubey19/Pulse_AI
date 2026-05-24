@@ -1,13 +1,15 @@
 {
-  "name": "pulse-demo-server",
+  "name": "shopfast-pulse-demo",
   "version": "1.0.0",
+  "description": "ShopFast mock e-commerce demo with Pulse SDK telemetry and incident simulation.",
   "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "pulse-node-sdk": "github:Subisticated/pulse-SDK"
   }
 }
